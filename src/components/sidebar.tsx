@@ -54,12 +54,11 @@ export function Sidebar({
     <>
       {/* Backdrop */}
       {open ? (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 transition-opacity"
+        <button
+          type="button"
+          className="fixed inset-0 bg-black/20 z-40 transition-opacity cursor-default"
           onClick={onClose}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-          }}
+          aria-label="Close sidebar"
         />
       ) : null}
 
@@ -68,9 +67,7 @@ export function Sidebar({
         className={`fixed top-0 left-0 h-full w-72 bg-white border-r border-[#eae7e3] z-50 transform transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#eae7e3]">
-          <h2 className="text-sm font-medium text-[#1a1a1a]">
-            Conversations
-          </h2>
+          <h2 className="text-sm font-medium text-[#1a1a1a]">Conversations</h2>
           <button
             type="button"
             onClick={onClose}

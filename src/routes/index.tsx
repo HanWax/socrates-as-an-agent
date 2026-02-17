@@ -1,7 +1,6 @@
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Sidebar } from "../components/sidebar";
+import type { UIMessage } from "ai";
 import {
   BookmarkCheck,
   BookOpen,
@@ -34,6 +33,7 @@ import {
 } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Sidebar } from "../components/sidebar";
 
 interface ModelOption {
   id: string;
@@ -939,16 +939,206 @@ const starterCards = [
   },
 ];
 
+interface ConversationListItem {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
+async function saveMessageToDb(
+  conversationId: string,
+  role: "user" | "assistant",
+  parts: unknown,
+) {
+  await fetch(`/api/conversations/${conversationId}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, content: parts }),
+  });
+}
+
 export function Chat() {
+  const { c: urlConversationId } = Route.useSearch();
+  const navigate = useNavigate({ from: "/" });
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [conversationList, setConversationList] = useState<
+    ConversationListItem[]
+  >([]);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | undefined
+  >(urlConversationId);
+  const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState("");
 
+  const fetchConversationList = useCallback(() => {
+    fetch("/api/conversations")
+      .then((res) => res.json())
+      .then((data: { conversations: ConversationListItem[] }) => {
+        setConversationList(data.conversations);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load models on mount
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/models", { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data: ModelOption[]) => {
+        setModels(data);
+        if (data.length > 0) setSelectedModelId(data[0].id);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  // Load conversation list on mount
+  useEffect(() => {
+    fetchConversationList();
+  }, [fetchConversationList]);
+
+  // Load conversation when URL changes
+  useEffect(() => {
+    if (urlConversationId) {
+      fetch(`/api/conversations/${urlConversationId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Not found");
+          return res.json();
+        })
+        .then(
+          (data: {
+            messages: {
+              id: string;
+              role: "user" | "assistant";
+              content: unknown;
+              created_at: string;
+            }[];
+          }) => {
+            const msgs: UIMessage[] = data.messages.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: "",
+              parts: m.content as UIMessage["parts"],
+              createdAt: new Date(m.created_at),
+            }));
+            setInitialMessages(msgs);
+            setCurrentConversationId(urlConversationId);
+          },
+        )
+        .catch(() => {
+          setInitialMessages([]);
+          setCurrentConversationId(undefined);
+        });
+    } else {
+      setInitialMessages([]);
+      setCurrentConversationId(undefined);
+    }
+  }, [urlConversationId]);
+
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      setSidebarOpen(false);
+      navigate({ search: { c: id } });
+    },
+    [navigate],
+  );
+
+  const handleNewConversation = useCallback(() => {
+    setSidebarOpen(false);
+    setInitialMessages([]);
+    setCurrentConversationId(undefined);
+    navigate({ search: {} });
+  }, [navigate]);
+
+  const handleDeleteConversation = useCallback(
+    (id: string) => {
+      fetch(`/api/conversations/${id}`, { method: "DELETE" }).then(() => {
+        fetchConversationList();
+        if (id === currentConversationId) {
+          handleNewConversation();
+        }
+      });
+    },
+    [currentConversationId, fetchConversationList, handleNewConversation],
+  );
+
+  const handleConversationCreated = useCallback(
+    (id: string) => {
+      setCurrentConversationId(id);
+      navigate({ search: { c: id } });
+      fetchConversationList();
+    },
+    [navigate, fetchConversationList],
+  );
+
+  const handleMessageSaved = useCallback(() => {
+    fetchConversationList();
+  }, [fetchConversationList]);
+
+  return (
+    <>
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        conversations={conversationList}
+        currentConversationId={currentConversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
+      />
+      <ChatView
+        key={currentConversationId ?? "new"}
+        initialMessages={initialMessages}
+        conversationId={currentConversationId}
+        models={models}
+        selectedModelId={selectedModelId}
+        onSelectedModelIdChange={setSelectedModelId}
+        onConversationCreated={handleConversationCreated}
+        onMessageSaved={handleMessageSaved}
+        onToggleSidebar={() => setSidebarOpen((o) => !o)}
+      />
+    </>
+  );
+}
+
+interface ChatViewProps {
+  initialMessages: UIMessage[];
+  conversationId: string | undefined;
+  models: ModelOption[];
+  selectedModelId: string;
+  onSelectedModelIdChange: (id: string) => void;
+  onConversationCreated: (id: string) => void;
+  onMessageSaved: () => void;
+  onToggleSidebar: () => void;
+}
+
+function ChatView({
+  initialMessages,
+  conversationId,
+  models,
+  selectedModelId,
+  onSelectedModelIdChange,
+  onConversationCreated,
+  onMessageSaved,
+  onToggleSidebar,
+}: ChatViewProps) {
   const [taglineIndex] = useState(() =>
     Math.floor(Math.random() * taglines.length),
   );
+  const convIdRef = useRef(conversationId);
 
   const { messages, sendMessage, status } = useChat({
+    initialMessages,
     body: { modelId: selectedModelId },
+    onFinish: async (message) => {
+      const cId = convIdRef.current;
+      if (cId && message.role === "assistant") {
+        await saveMessageToDb(cId, "assistant", message.parts);
+        onMessageSaved();
+      }
+    },
   });
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<FileList | undefined>(undefined);
@@ -969,18 +1159,6 @@ export function Chat() {
       }
     };
   }, [fileUrls]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/models", { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data: ModelOption[]) => {
-        setModels(data);
-        if (data.length > 0) setSelectedModelId(data[0].id);
-      })
-      .catch(() => {});
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -1005,17 +1183,58 @@ export function Chat() {
   const hasMessages = messages && messages.length > 0;
   const hasFiles = files && files.length > 0;
 
-  const submit = useCallback(() => {
-    const text = input.trim();
-    if ((!text && !hasFiles) || isLoading) return;
-    setInput("");
-    sendMessage({ text, files });
-    setFiles(undefined);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-  }, [input, isLoading, sendMessage, files, hasFiles]);
+  const submit = useCallback(
+    async (textOverride?: string) => {
+      const text = textOverride ?? input.trim();
+      if ((!text && !hasFiles) || isLoading) return;
+      if (!textOverride) setInput("");
+
+      // Create conversation if needed
+      let cId = convIdRef.current;
+      if (!cId) {
+        try {
+          const res = await fetch("/api/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+          const conv = (await res.json()) as { id: string };
+          cId = conv.id;
+          convIdRef.current = cId;
+          onConversationCreated(cId);
+        } catch {
+          // Continue without persistence
+        }
+      }
+
+      // Build parts for saving
+      const parts: unknown[] = [];
+      if (text) parts.push({ type: "text", text });
+
+      // Save user message
+      if (cId && parts.length > 0) {
+        saveMessageToDb(cId, "user", parts).then(() => onMessageSaved());
+      }
+
+      sendMessage({ text, files: textOverride ? undefined : files });
+      if (!textOverride) {
+        setFiles(undefined);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+        }
+      }
+    },
+    [
+      input,
+      isLoading,
+      sendMessage,
+      files,
+      hasFiles,
+      onConversationCreated,
+      onMessageSaved,
+    ],
+  );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -1279,7 +1498,7 @@ export function Chat() {
             <div className="relative mt-3 mb-6">
               <select
                 value={selectedModelId}
-                onChange={(e) => setSelectedModelId(e.target.value)}
+                onChange={(e) => onSelectedModelIdChange(e.target.value)}
                 className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
               >
                 {models.map((m) => (
@@ -1299,7 +1518,7 @@ export function Chat() {
               <button
                 key={card.title}
                 type="button"
-                onClick={() => sendMessage({ text: card.prompt })}
+                onClick={() => submit(card.prompt)}
                 disabled={isLoading}
                 className="text-left rounded-xl border border-[#d4eeec] bg-white px-4 py-3 transition-all hover:border-[#5BA8A0] hover:shadow-sm disabled:opacity-50"
               >
@@ -1329,6 +1548,14 @@ export function Chat() {
     <div className="flex flex-col h-screen bg-[#fafafa]">
       {/* Sticky Socrates header */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-3 bg-[#fafafa] border-b border-[#eae7e3]">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="p-1.5 rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#f0faf9] transition-colors"
+          aria-label="Toggle sidebar"
+        >
+          <Menu size={20} />
+        </button>
         <img src="/socrates.svg" alt="Socrates" className="w-10 h-10" />
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-medium text-[#1a1a1a] leading-tight">
@@ -1340,7 +1567,7 @@ export function Chat() {
           <div className="relative shrink-0">
             <select
               value={selectedModelId}
-              onChange={(e) => setSelectedModelId(e.target.value)}
+              onChange={(e) => onSelectedModelIdChange(e.target.value)}
               className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
             >
               {models.map((m) => (

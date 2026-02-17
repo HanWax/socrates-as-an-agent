@@ -19,7 +19,11 @@ vi.mock("@ai-sdk/react", () => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (opts: Record<string, unknown>) => opts,
+  createFileRoute: () => (opts: Record<string, unknown>) => ({
+    ...opts,
+    useSearch: () => ({ c: undefined }),
+  }),
+  useNavigate: () => vi.fn(),
 }));
 
 // jsdom doesn't implement scrollIntoView
