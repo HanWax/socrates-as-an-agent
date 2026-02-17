@@ -176,6 +176,89 @@ export const tools = {
     },
   }),
 
+  drawDiagram: tool({
+    description:
+      "Draw a visual diagram to illustrate a concept, argument, or process. Use flowcharts for argument structures, decision trees, cause-and-effect chains. Use sequence diagrams for back-and-forth interactions. Use class diagrams for entity relationships. Keep diagrams simple — 4-8 nodes is ideal.",
+    inputSchema: z.object({
+      title: z.string().describe("Brief diagram title"),
+      diagramType: z
+        .enum(["flowchart", "sequence", "class"])
+        .describe("The type of Mermaid diagram"),
+      mermaidSyntax: z.string().describe("Valid Mermaid diagram code"),
+    }),
+    execute: async (input) => input,
+  }),
+
+  retrievalPractice: tool({
+    description:
+      "Structure a recall challenge after teaching a concept. Use this after 3-4 substantive exchanges on a topic to test the user's understanding. First call with status 'question' to pose the challenge, then with status 'feedback' after the user responds.",
+    inputSchema: z.object({
+      topic: z.string().describe("The concept being tested"),
+      status: z
+        .enum(["question", "feedback"])
+        .describe("Which phase of the recall loop"),
+      question: z.string().describe("The retrieval question"),
+      hint: z
+        .string()
+        .optional()
+        .describe("A nudge if the user is stuck"),
+      feedback: z
+        .object({
+          assessment: z
+            .enum(["strong", "partial", "needs_work"])
+            .describe("How well the user recalled the concept"),
+          whatWasRight: z
+            .array(z.string())
+            .describe("Points the user got right"),
+          whatWasMissed: z
+            .array(z.string())
+            .describe("Points the user missed"),
+          correctedExplanation: z
+            .string()
+            .describe("The corrected or complete explanation"),
+          followUpQuestion: z
+            .string()
+            .describe("A follow-up question to deepen understanding"),
+        })
+        .optional()
+        .describe("Only provided when status is 'feedback'"),
+    }),
+    execute: async (input) => input,
+  }),
+
+  progressiveDisclosure: tool({
+    description:
+      "Structure a multi-layered explanation from simple to nuanced. Use this when explaining complex concepts — start with the simplest mental model and build depth layer by layer, checking readiness before going deeper.",
+    inputSchema: z.object({
+      concept: z.string().describe("What is being explained"),
+      layers: z
+        .array(
+          z.object({
+            level: z.number().describe("Depth level starting at 1"),
+            title: z.string().describe("Short title for this level"),
+            explanation: z
+              .string()
+              .describe("The explanation at this depth"),
+            analogy: z
+              .string()
+              .optional()
+              .describe("Optional analogy to make it concrete"),
+            readinessQuestion: z
+              .string()
+              .describe("Question to check before going deeper"),
+          }),
+        )
+        .min(2)
+        .max(5)
+        .describe("The explanation layers from simple to complex"),
+      currentLevel: z
+        .number()
+        .default(1)
+        .describe("Where the user is now"),
+    }),
+    execute: async (input) => input,
+  }),
+
   saveInsight: tool({
     description:
       "Save a breakthrough insight or realization that the user has reached during the Socratic dialogue. Only call this when the user has clearly articulated a genuine understanding.",

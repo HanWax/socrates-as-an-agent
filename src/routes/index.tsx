@@ -33,6 +33,7 @@ import {
 } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { DiagramPart } from "../components/DiagramPart";
 import { Sidebar } from "../components/sidebar";
 
 interface ModelOption {
@@ -1441,6 +1442,22 @@ function ChatView({
             }
           />,
         );
+      } else if (part.type === "tool-drawDiagram") {
+        elements.push(
+          <DiagramPart
+            key={`dd-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as {
+                    title: string;
+                    diagramType: "flowchart" | "sequence" | "class";
+                    mermaidSyntax: string;
+                  })
+                : undefined
+            }
+          />,
+        );
       }
     }
 
@@ -1546,7 +1563,7 @@ function ChatView({
   // Conversation view
   return (
     <div className="flex flex-col h-screen bg-[#fafafa]">
-      {/* Sticky Socrates header */}
+      {/* Sticky header */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-3 bg-[#fafafa] border-b border-[#eae7e3]">
         <button
           type="button"
@@ -1559,9 +1576,9 @@ function ChatView({
         <img src="/socrates.svg" alt="Socrates" className="w-10 h-10" />
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-medium text-[#1a1a1a] leading-tight">
-            Socrates
+            Soundboard as a Service
           </h1>
-          <p className="text-xs text-[#8b8b8b]">Questioning your assumptions</p>
+          <p className="text-xs text-[#8b8b8b]">Just when they told you that SaaS was dead</p>
         </div>
         {models.length > 1 ? (
           <div className="relative shrink-0">
