@@ -2,21 +2,30 @@ import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   BookmarkCheck,
+  BookOpen,
   Brain,
   ChevronDown,
+  FileText,
+  GitBranch,
   Globe,
+  GraduationCap,
   ImagePlus,
+  Newspaper,
   ShieldCheck,
   Swords,
   Users,
+  Video,
   X,
 } from "lucide-react";
 import {
   type ChangeEvent,
   type DragEvent,
+  type FormEvent,
   type KeyboardEvent,
+  type RefObject,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -88,7 +97,7 @@ function WebSearchPart({
           className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && (
+      {open ? (
         <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
           {results.map((r) => (
             <div key={r.url}>
@@ -104,7 +113,7 @@ function WebSearchPart({
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -130,9 +139,9 @@ function SaveInsightPart({
       <BookmarkCheck size={14} className="mt-0.5 text-[#5BA8A0] shrink-0" />
       <div>
         <span className="font-medium text-[#1a1a1a]">Insight saved</span>
-        {output?.topic && (
+        {output?.topic ? (
           <span className="text-[#8b8b8b]"> in {output.topic}</span>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -177,7 +186,7 @@ function DevilsAdvocatePart({
           className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && output && (
+      {open && output ? (
         <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Your position: </span>
@@ -187,7 +196,7 @@ function DevilsAdvocatePart({
             <span className="font-medium">Steelman: </span>
             {output.steelmanArgument}
           </p>
-          {output.keyEvidence.length > 0 && (
+          {output.keyEvidence.length > 0 ? (
             <div>
               <span className="font-medium text-[#1a1a1a]">Key evidence:</span>
               <ul className="mt-1 space-y-1 text-[#1a1a1a]">
@@ -199,12 +208,12 @@ function DevilsAdvocatePart({
                 ))}
               </ul>
             </div>
-          )}
+          ) : null}
           <p className="text-[#5BA8A0] font-medium italic leading-snug">
             {output.challengeQuestion}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -258,24 +267,24 @@ function FactCheckPart({
       >
         <ShieldCheck size={14} className="text-[#5BA8A0]" />
         Fact Check
-        {output && (
+        {output ? (
           <span className={`text-xs ${verdictColor[output.verdict]}`}>
             — {verdictLabel[output.verdict]}
           </span>
-        )}
+        ) : null}
         <ChevronDown
           size={14}
           className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && output && (
+      {open && output ? (
         <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Claim: </span>
             &ldquo;{output.claim}&rdquo;
           </p>
           <p className="text-[#1a1a1a] leading-snug">{output.analysis}</p>
-          {output.evidenceFor.length > 0 && (
+          {output.evidenceFor.length > 0 ? (
             <div>
               <span className="font-medium text-emerald-600">
                 Evidence for:
@@ -289,8 +298,8 @@ function FactCheckPart({
                 ))}
               </ul>
             </div>
-          )}
-          {output.evidenceAgainst.length > 0 && (
+          ) : null}
+          {output.evidenceAgainst.length > 0 ? (
             <div>
               <span className="font-medium text-red-500">
                 Evidence against:
@@ -304,9 +313,9 @@ function FactCheckPart({
                 ))}
               </ul>
             </div>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -346,15 +355,15 @@ function LogicalAnalysisPart({
       >
         <Brain size={14} className="text-[#5BA8A0]" />
         Logical Analysis
-        {output && (
+        {output ? (
           <span className="text-xs text-[#8b8b8b]">— {output.fallacy}</span>
-        )}
+        ) : null}
         <ChevronDown
           size={14}
           className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && output && (
+      {open && output ? (
         <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Your reasoning: </span>
@@ -373,7 +382,7 @@ function LogicalAnalysisPart({
             {output.betterFraming}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -422,7 +431,7 @@ function PerspectiveShiftPart({
           className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && output && (
+      {open && output ? (
         <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
           {output.perspectives.map((p) => (
             <div key={p.stakeholder}>
@@ -435,7 +444,291 @@ function PerspectiveShiftPart({
             {output.blindSpotQuestion}
           </p>
         </div>
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+interface ArgumentMapOutput {
+  claim: string;
+  premises: { text: string; evidence: string[] }[];
+  conclusion: string;
+  counterarguments?: { point: string; rebuttal?: string }[];
+}
+
+function ArgumentMapPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: ArgumentMapOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <GitBranch size={14} className="animate-pulse" />
+        Mapping argument structure...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <GitBranch size={14} className="text-[#5BA8A0]" />
+        Argument Map
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output ? (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
+          <div className="rounded-lg bg-[#5BA8A0]/10 px-3 py-2">
+            <span className="font-medium text-[#1a1a1a]">Claim: </span>
+            <span className="text-[#1a1a1a]">{output.claim}</span>
+          </div>
+          <div>
+            <span className="font-medium text-[#1a1a1a]">Premises:</span>
+            <div className="mt-1 space-y-2">
+              {output.premises.map((p, i) => (
+                <div key={i} className="border-l-2 border-[#5BA8A0] pl-3">
+                  <p className="text-[#1a1a1a] leading-snug">{p.text}</p>
+                  {p.evidence.length > 0 ? (
+                    <ul className="mt-1 space-y-0.5">
+                      {p.evidence.map((e) => (
+                        <li
+                          key={e}
+                          className="flex gap-1.5 text-[#8b8b8b] leading-snug"
+                        >
+                          <span className="text-[#5BA8A0] shrink-0">
+                            &#8226;
+                          </span>
+                          {e}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="font-medium text-[#1a1a1a]">Conclusion: </span>
+            <span className="text-[#5BA8A0] font-medium">
+              {output.conclusion}
+            </span>
+          </div>
+          {output.counterarguments && output.counterarguments.length > 0 ? (
+            <div>
+              <span className="font-medium text-[#F08B8B]">
+                Counterarguments:
+              </span>
+              <div className="mt-1 space-y-2">
+                {output.counterarguments.map((ca, i) => (
+                  <div key={i} className="border-l-2 border-[#F08B8B] pl-3">
+                    <p className="text-[#1a1a1a] leading-snug">{ca.point}</p>
+                    {ca.rebuttal ? (
+                      <p className="text-[#8b8b8b] leading-snug mt-0.5">
+                        <span className="font-medium text-[#5BA8A0]">
+                          Rebuttal:{" "}
+                        </span>
+                        {ca.rebuttal}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface ReadingRecommendation {
+  title: string;
+  author: string;
+  type: "book" | "article" | "paper" | "video";
+  description: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+}
+
+interface ReadingListOutput {
+  topic: string;
+  recommendations: ReadingRecommendation[];
+}
+
+const typeIcon: Record<ReadingRecommendation["type"], typeof BookOpen> = {
+  book: BookOpen,
+  article: FileText,
+  paper: GraduationCap,
+  video: Video,
+};
+
+const difficultyColor: Record<ReadingRecommendation["difficulty"], string> = {
+  beginner: "bg-emerald-100 text-emerald-700",
+  intermediate: "bg-amber-100 text-amber-700",
+  advanced: "bg-red-100 text-red-700",
+};
+
+function ReadingListPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: ReadingListOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <BookOpen size={14} className="animate-pulse" />
+        Curating reading list...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <BookOpen size={14} className="text-[#5BA8A0]" />
+        Reading List — {output?.topic}
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output ? (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
+          {output.recommendations.map((rec) => {
+            const Icon = typeIcon[rec.type];
+            return (
+              <div key={rec.title} className="flex gap-2">
+                <Icon size={14} className="mt-0.5 text-[#5BA8A0] shrink-0" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-[#1a1a1a]">
+                      {rec.title}
+                    </span>
+                    <span className="text-[#8b8b8b]">by {rec.author}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+                      {rec.type}
+                    </span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[11px] ${difficultyColor[rec.difficulty]}`}
+                    >
+                      {rec.difficulty}
+                    </span>
+                  </div>
+                  <p className="text-[#8b8b8b] leading-snug mt-1">
+                    {rec.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface DiscoverResource {
+  title: string;
+  url: string;
+  snippet: string;
+  publishedDate: string | null;
+}
+
+interface DiscoverResourcesOutput {
+  topic: string;
+  reason: string;
+  resources: DiscoverResource[];
+  error?: string;
+}
+
+function DiscoverResourcesPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: DiscoverResourcesOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <Newspaper size={14} className="animate-pulse" />
+        Discovering recent resources...
+      </div>
+    );
+  }
+
+  const resources = output?.resources ?? [];
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <Newspaper size={14} className="text-[#5BA8A0]" />
+        Recent Resources — {output?.topic}
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output ? (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
+          <p className="text-[#5BA8A0] italic leading-snug">{output.reason}</p>
+          {resources.map((r) => {
+            let domain = "";
+            try {
+              domain = new URL(r.url).hostname.replace("www.", "");
+            } catch {
+              /* ignore */
+            }
+            return (
+              <div key={r.url} className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[#5BA8A0] hover:underline"
+                  >
+                    {r.title}
+                  </a>
+                  {domain ? (
+                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+                      {domain}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-[#8b8b8b] leading-snug">{r.snippet}</p>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -448,9 +741,200 @@ function removeFileAtIndex(files: FileList, index: number): FileList {
   return dt.files;
 }
 
+interface ComposerProps {
+  formClassName: string;
+  placeholder: string;
+  rows: number;
+  textareaPadding: string;
+  input: string;
+  isLoading: boolean;
+  isDragging: boolean;
+  files: FileList | undefined;
+  fileUrls: string[];
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onDragOver: (e: DragEvent) => void;
+  onDragLeave: (e: DragEvent) => void;
+  onDrop: (e: DragEvent) => void;
+  onInputChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onRemoveFile: (index: number) => void;
+}
+
+function Composer({
+  formClassName,
+  placeholder,
+  rows,
+  textareaPadding,
+  input,
+  isLoading,
+  isDragging,
+  files,
+  fileUrls,
+  textareaRef,
+  fileInputRef,
+  onSubmit,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onInputChange,
+  onKeyDown,
+  onFileChange,
+  onRemoveFile,
+}: ComposerProps) {
+  const hasFiles = files && files.length > 0;
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={formClassName}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        multiple
+        onChange={onFileChange}
+        className="hidden"
+        data-testid="file-input"
+      />
+      <div
+        className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#5BA8A0] ${isDragging ? "border-[#5BA8A0] border-dashed border-2" : "border-[#d4eeec]"}`}
+        style={{ boxShadow: composerShadow }}
+      >
+        {hasFiles ? (
+          <div
+            className="flex gap-2 px-5 pt-3 pb-1 overflow-x-auto"
+            data-testid="file-preview"
+          >
+            {Array.from(files).map((file, index) => (
+              <div
+                key={`${file.name}-${file.lastModified}`}
+                className="relative shrink-0 group"
+              >
+                <img
+                  src={fileUrls[index] ?? ""}
+                  alt={file.name}
+                  className="w-16 h-16 rounded-lg object-cover border border-[#d4eeec]"
+                />
+                <button
+                  type="button"
+                  onClick={() => onRemoveFile(index)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label={`Remove ${file.name}`}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={onInputChange}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          rows={rows}
+          className={`relative z-10 w-full resize-none bg-transparent pl-14 pr-5 ${textareaPadding} text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none`}
+          disabled={isLoading}
+        />
+        <div className="absolute bottom-3 left-3 z-20">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#8b8b8b] transition-all hover:text-[#5BA8A0] hover:bg-[#f0faf9] disabled:opacity-50 disabled:hover:text-[#8b8b8b] disabled:hover:bg-transparent"
+            aria-label="Upload image"
+          >
+            <ImagePlus size={18} />
+          </button>
+        </div>
+        <div className="absolute bottom-3 right-3 z-20">
+          <button
+            type="submit"
+            disabled={isLoading || (!input.trim() && !hasFiles)}
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#5BA8A0] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#d4eeec] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 8h10M9 4l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+const taglines = [
+  "I'll ask you the hard questions.",
+  "The unexamined life is not worth living.",
+  "Want someone to challenge your thinking?",
+];
+
+const starterCards = [
+  {
+    title: "Challenge my beliefs",
+    subtitle: "Pick a belief and I'll question every assumption",
+    prompt:
+      "I want you to challenge my beliefs. Pick a belief I might hold and question every assumption behind it.",
+  },
+  {
+    title: "Stress-test my startup idea",
+    subtitle: "I'll find every weakness before your competitors do",
+    prompt:
+      "I have a startup idea I'd like you to stress-test. Help me find every weakness before my competitors do.",
+  },
+  {
+    title: "Explore an ethical dilemma",
+    subtitle: "No easy answers, just better questions",
+    prompt:
+      "I want to explore an ethical dilemma with you. Give me a challenging one with no easy answers.",
+  },
+  {
+    title: "Find my life's direction",
+    subtitle: "What should you actually be doing with your time?",
+    prompt:
+      "Help me think about what I should actually be doing with my life. I want to find my direction.",
+  },
+  {
+    title: "Do we have free will?",
+    subtitle: "Or is everything predetermined?",
+    prompt:
+      "Do we have free will, or is everything predetermined? I want to explore this question deeply.",
+  },
+  {
+    title: "Debate a hot take",
+    subtitle: "I'll build the strongest case against your position",
+    prompt:
+      "I have a hot take I want to debate. I'll share my position and you build the strongest case against it.",
+  },
+];
+
 export function Chat() {
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState("");
+
+  const [taglineIndex] = useState(() =>
+    Math.floor(Math.random() * taglines.length),
+  );
 
   const { messages, sendMessage, status } = useChat({
     body: { modelId: selectedModelId },
@@ -462,13 +946,29 @@ export function Chat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const fileUrls = useMemo(() => {
+    if (!files || files.length === 0) return [];
+    return Array.from(files).map((file) => URL.createObjectURL(file));
+  }, [files]);
+
   useEffect(() => {
-    fetch("/api/models")
+    return () => {
+      for (const url of fileUrls) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [fileUrls]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/models", { signal: controller.signal })
       .then((res) => res.json())
       .then((data: ModelOption[]) => {
         setModels(data);
         if (data.length > 0) setSelectedModelId(data[0].id);
-      });
+      })
+      .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -513,7 +1013,7 @@ export function Chat() {
     }
   };
 
-  const handleFormSubmit = (e: SubmitEvent) => {
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     submit();
   };
@@ -561,70 +1061,16 @@ export function Chat() {
     }
   };
 
-  const filePreview = hasFiles ? (
-    <div
-      className="flex gap-2 px-5 pt-3 pb-1 overflow-x-auto"
-      data-testid="file-preview"
-    >
-      {Array.from(files).map((file, index) => (
-        <div
-          key={`${file.name}-${file.lastModified}`}
-          className="relative shrink-0 group"
-        >
-          <img
-            src={URL.createObjectURL(file)}
-            alt={file.name}
-            className="w-16 h-16 rounded-lg object-cover border border-[#d4eeec]"
-          />
-          <button
-            type="button"
-            onClick={() => removeFile(index)}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label={`Remove ${file.name}`}
-          >
-            <X size={12} />
-          </button>
-        </div>
-      ))}
-    </div>
-  ) : null;
-
-  const uploadButton = (
-    <div className="absolute bottom-3 left-3 z-20">
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isLoading}
-        className="flex items-center justify-center w-9 h-9 rounded-lg text-[#8b8b8b] transition-all hover:text-[#5BA8A0] hover:bg-[#f0faf9] disabled:opacity-50 disabled:hover:text-[#8b8b8b] disabled:hover:bg-transparent"
-        aria-label="Upload image"
-      >
-        <ImagePlus size={18} />
-      </button>
-    </div>
-  );
-
-  const hiddenFileInput = (
-    <input
-      ref={fileInputRef}
-      type="file"
-      accept="image/jpeg,image/png,image/gif,image/webp"
-      multiple
-      onChange={handleFileChange}
-      className="hidden"
-      data-testid="file-input"
-    />
-  );
-
   const renderMessageParts = (message: (typeof messages)[number]) => {
     const elements: React.ReactNode[] = [];
     const imageFiles: { filename?: string }[] = [];
 
-    for (const part of message.parts) {
+    for (const [i, part] of message.parts.entries()) {
       if (part.type === "text") {
         if (message.role === "assistant") {
           elements.push(
             <div
-              key={`text-${part.text.slice(0, 32)}`}
+              key={`text-${i}`}
               className="prose-socrates text-[15px] leading-relaxed"
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -635,7 +1081,7 @@ export function Chat() {
         } else {
           elements.push(
             <div
-              key={`text-${part.text.slice(0, 32)}`}
+              key={`text-${i}`}
               className="prose-user text-[15px] leading-relaxed"
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -729,6 +1175,42 @@ export function Chat() {
             }
           />,
         );
+      } else if (part.type === "tool-mapArgument") {
+        elements.push(
+          <ArgumentMapPart
+            key={`am-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as ArgumentMapOutput)
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-suggestReading") {
+        elements.push(
+          <ReadingListPart
+            key={`rl-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as ReadingListOutput)
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-discoverResources") {
+        elements.push(
+          <DiscoverResourcesPart
+            key={`dr-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as DiscoverResourcesOutput)
+                : undefined
+            }
+          />,
+        );
       }
     }
 
@@ -743,12 +1225,30 @@ export function Chat() {
       elements.push(
         <p key="image-summary" className="text-[13px] italic opacity-80 mt-1">
           {label}
-          {names && ` (${names})`}
+          {names ? ` (${names})` : null}
         </p>,
       );
     }
 
     return elements;
+  };
+
+  const composerProps = {
+    input,
+    isLoading,
+    isDragging,
+    files,
+    fileUrls,
+    textareaRef,
+    fileInputRef,
+    onSubmit: handleFormSubmit,
+    onDragOver: handleDragOver,
+    onDragLeave: handleDragLeave,
+    onDrop: handleDrop,
+    onInputChange,
+    onKeyDown: handleKeyDown,
+    onFileChange: handleFileChange,
+    onRemoveFile: removeFile,
   };
 
   // Empty state
@@ -762,13 +1262,10 @@ export function Chat() {
             className="w-80 h-auto mb-4"
           />
           <h1 className="text-2xl font-medium text-[#1a1a1a] mb-1">
-            What would you like to examine?
+            {taglines[taglineIndex]}
           </h1>
-          <p className="text-sm text-[#8b8b8b] mb-4">
-            Socrates will question your assumptions.
-          </p>
-          {models.length > 1 && (
-            <div className="relative mb-6">
+          {models.length > 1 ? (
+            <div className="relative mt-3 mb-6">
               <select
                 value={selectedModelId}
                 onChange={(e) => setSelectedModelId(e.target.value)}
@@ -785,56 +1282,32 @@ export function Chat() {
                 className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b8b8b]"
               />
             </div>
-          )}
-          <form
-            onSubmit={handleFormSubmit}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className="w-full max-w-2xl"
-          >
-            {hiddenFileInput}
-            <div
-              className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#5BA8A0] ${isDragging ? "border-[#5BA8A0] border-dashed border-2" : "border-[#d4eeec]"}`}
-              style={{ boxShadow: composerShadow }}
-            >
-              {filePreview}
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={onInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Share a thought or belief..."
-                rows={3}
-                className="relative z-10 w-full resize-none bg-transparent pl-14 pr-5 pt-4 pb-14 text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none"
+          ) : null}
+          <div className="grid grid-cols-2 gap-3 w-full max-w-2xl mb-6 mt-2">
+            {starterCards.map((card) => (
+              <button
+                key={card.title}
+                type="button"
+                onClick={() => sendMessage({ text: card.prompt })}
                 disabled={isLoading}
-              />
-              {uploadButton}
-              <div className="absolute bottom-3 right-3 z-20">
-                <button
-                  type="submit"
-                  disabled={isLoading || (!input.trim() && !hasFiles)}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#5BA8A0] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#d4eeec] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M3 8h10M9 4l4 4-4 4"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </form>
+                className="text-left rounded-xl border border-[#d4eeec] bg-white px-4 py-3 transition-all hover:border-[#5BA8A0] hover:shadow-sm disabled:opacity-50"
+              >
+                <p className="font-medium text-[14px] text-[#1a1a1a]">
+                  {card.title}
+                </p>
+                <p className="text-[13px] text-[#8b8b8b] mt-0.5">
+                  {card.subtitle}
+                </p>
+              </button>
+            ))}
+          </div>
+          <Composer
+            {...composerProps}
+            formClassName="w-full max-w-2xl"
+            placeholder="Share a thought or belief..."
+            rows={3}
+            textareaPadding="pt-4 pb-14"
+          />
         </div>
       </div>
     );
@@ -852,7 +1325,7 @@ export function Chat() {
           </h1>
           <p className="text-xs text-[#8b8b8b]">Questioning your assumptions</p>
         </div>
-        {models.length > 1 && (
+        {models.length > 1 ? (
           <div className="relative shrink-0">
             <select
               value={selectedModelId}
@@ -870,7 +1343,7 @@ export function Chat() {
               className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b8b8b]"
             />
           </div>
-        )}
+        ) : null}
       </div>
 
       <main className="flex-1 overflow-y-auto">
@@ -899,7 +1372,7 @@ export function Chat() {
             </div>
           ))}
 
-          {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+          {isLoading && messages[messages.length - 1]?.role !== "assistant" ? (
             <div className="flex gap-3">
               <img
                 src="/socrates.svg"
@@ -912,7 +1385,7 @@ export function Chat() {
                 <span className="w-2 h-2 rounded-full bg-[#CCFFFF] animate-bounce [animation-delay:300ms]" />
               </div>
             </div>
-          )}
+          ) : null}
 
           <div ref={messagesEndRef} />
         </div>
@@ -920,55 +1393,13 @@ export function Chat() {
 
       {/* Pinned composer at bottom */}
       <div className="shrink-0 border-t border-[#eae7e3] bg-[#fafafa] px-4 py-4">
-        <form
-          onSubmit={handleFormSubmit}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className="mx-auto max-w-2xl"
-        >
-          {hiddenFileInput}
-          <div
-            className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#5BA8A0] ${isDragging ? "border-[#5BA8A0] border-dashed border-2" : "border-[#d4eeec]"}`}
-            style={{ boxShadow: composerShadow }}
-          >
-            {filePreview}
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={onInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Reply..."
-              rows={1}
-              className="relative z-10 w-full resize-none bg-transparent pl-14 pr-5 pt-3.5 pb-12 text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none"
-              disabled={isLoading}
-            />
-            {uploadButton}
-            <div className="absolute bottom-3 right-3 z-20">
-              <button
-                type="submit"
-                disabled={isLoading || (!input.trim() && !hasFiles)}
-                className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#5BA8A0] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#d4eeec] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M3 8h10M9 4l4 4-4 4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </form>
+        <Composer
+          {...composerProps}
+          formClassName="mx-auto max-w-2xl"
+          placeholder="Reply..."
+          rows={1}
+          textareaPadding="pt-3.5 pb-12"
+        />
       </div>
     </div>
   );
