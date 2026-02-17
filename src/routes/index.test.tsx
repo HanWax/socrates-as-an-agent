@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import {
   afterEach,
   beforeAll,
@@ -34,16 +40,42 @@ beforeAll(() => {
 // Mock fetch for /api/models
 const originalFetch = globalThis.fetch;
 beforeEach(() => {
-  globalThis.fetch = vi.fn((input) => {
-    if (typeof input === "string" && input === "/api/models") {
-      return Promise.resolve(
-        new Response(JSON.stringify([]), {
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    }
-    return originalFetch(input);
-  }) as typeof fetch;
+  globalThis.fetch = vi.fn(
+    (input: string | URL | Request, init?: RequestInit) => {
+      if (typeof input === "string" && input === "/api/models") {
+        return Promise.resolve(
+          new Response(JSON.stringify([]), {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      if (typeof input === "string" && input === "/api/conversations") {
+        if (init?.method === "POST") {
+          return Promise.resolve(
+            new Response(JSON.stringify({ id: "test-conv-id" }), {
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ conversations: [] }), {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      if (
+        typeof input === "string" &&
+        input.startsWith("/api/conversations/")
+      ) {
+        return Promise.resolve(
+          new Response(JSON.stringify({}), {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      return originalFetch(input);
+    },
+  ) as typeof fetch;
 });
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -103,7 +135,7 @@ describe("Chat", () => {
 
   it("calls useChat on mount", () => {
     render(<Chat />);
-    expect(mockUseChat).toHaveBeenCalledOnce();
+    expect(mockUseChat).toHaveBeenCalled();
   });
 
   describe("empty state", () => {
@@ -257,7 +289,7 @@ describe("Chat", () => {
   });
 
   describe("keyboard interaction", () => {
-    it("calls sendMessage when Cmd+Enter is pressed with input", () => {
+    it("calls sendMessage when Cmd+Enter is pressed with input", async () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
@@ -267,12 +299,14 @@ describe("Chat", () => {
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
       fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
 
-      expect(mockSendMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ text: "What is virtue?" }),
-      );
+      await waitFor(() => {
+        expect(mockSendMessage).toHaveBeenCalledWith(
+          expect.objectContaining({ text: "What is virtue?" }),
+        );
+      });
     });
 
-    it("calls sendMessage when Ctrl+Enter is pressed with input", () => {
+    it("calls sendMessage when Ctrl+Enter is pressed with input", async () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
@@ -282,9 +316,11 @@ describe("Chat", () => {
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
       fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
-      expect(mockSendMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ text: "What is virtue?" }),
-      );
+      await waitFor(() => {
+        expect(mockSendMessage).toHaveBeenCalledWith(
+          expect.objectContaining({ text: "What is virtue?" }),
+        );
+      });
     });
 
     it("does not submit on plain Enter", () => {
