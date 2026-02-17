@@ -198,10 +198,7 @@ export const tools = {
         .enum(["question", "feedback"])
         .describe("Which phase of the recall loop"),
       question: z.string().describe("The retrieval question"),
-      hint: z
-        .string()
-        .optional()
-        .describe("A nudge if the user is stuck"),
+      hint: z.string().optional().describe("A nudge if the user is stuck"),
       feedback: z
         .object({
           assessment: z
@@ -210,9 +207,7 @@ export const tools = {
           whatWasRight: z
             .array(z.string())
             .describe("Points the user got right"),
-          whatWasMissed: z
-            .array(z.string())
-            .describe("Points the user missed"),
+          whatWasMissed: z.array(z.string()).describe("Points the user missed"),
           correctedExplanation: z
             .string()
             .describe("The corrected or complete explanation"),
@@ -236,9 +231,7 @@ export const tools = {
           z.object({
             level: z.number().describe("Depth level starting at 1"),
             title: z.string().describe("Short title for this level"),
-            explanation: z
-              .string()
-              .describe("The explanation at this depth"),
+            explanation: z.string().describe("The explanation at this depth"),
             analogy: z
               .string()
               .optional()
@@ -251,10 +244,7 @@ export const tools = {
         .min(2)
         .max(5)
         .describe("The explanation layers from simple to complex"),
-      currentLevel: z
-        .number()
-        .default(1)
-        .describe("Where the user is now"),
+      currentLevel: z.number().default(1).describe("Where the user is now"),
     }),
     execute: async (input) => input,
   }),

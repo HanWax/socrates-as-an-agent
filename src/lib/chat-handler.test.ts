@@ -15,7 +15,12 @@ vi.mock("./model", () => ({
   isValidModelId: vi.fn(() => true),
 }));
 vi.mock("./tools", () => ({
-  tools: { webSearch: { mock: true }, saveInsight: { mock: true } },
+  tools: {
+    webSearch: { mock: true },
+    saveInsight: { mock: true },
+    retrievalPractice: { mock: true },
+    progressiveDisclosure: { mock: true },
+  },
 }));
 vi.mock("./logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -81,6 +86,8 @@ describe("SYSTEM_PROMPT", () => {
   it("describes available tools", () => {
     expect(SYSTEM_PROMPT).toContain("webSearch");
     expect(SYSTEM_PROMPT).toContain("saveInsight");
+    expect(SYSTEM_PROMPT).toContain("retrievalPractice");
+    expect(SYSTEM_PROMPT).toContain("progressiveDisclosure");
   });
 });
 

@@ -5,14 +5,12 @@ import {
   BookmarkCheck,
   BookOpen,
   Brain,
-  BrainCircuit,
   ChevronDown,
   FileText,
   GitBranch,
   Globe,
   GraduationCap,
   ImagePlus,
-  Layers,
   Menu,
   Newspaper,
   ShieldCheck,
@@ -747,6 +745,231 @@ function DiscoverResourcesPart({
   );
 }
 
+interface RetrievalPracticeFeedback {
+  assessment: "strong" | "partial" | "needs_work";
+  whatWasRight: string[];
+  whatWasMissed: string[];
+  correctedExplanation: string;
+  followUpQuestion: string;
+}
+
+interface RetrievalPracticeOutput {
+  topic: string;
+  status: "question" | "feedback";
+  question: string;
+  hint?: string;
+  feedback?: RetrievalPracticeFeedback;
+}
+
+const assessmentLabel: Record<RetrievalPracticeFeedback["assessment"], string> =
+  {
+    strong: "Strong",
+    partial: "Partial",
+    needs_work: "Needs Work",
+  };
+
+const assessmentColor: Record<RetrievalPracticeFeedback["assessment"], string> =
+  {
+    strong: "text-emerald-600 bg-emerald-100",
+    partial: "text-amber-600 bg-amber-100",
+    needs_work: "text-red-600 bg-red-100",
+  };
+
+function RetrievalPracticePart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: RetrievalPracticeOutput;
+}) {
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <BrainCircuit size={14} className="animate-pulse" />
+        Preparing recall challenge...
+      </div>
+    );
+  }
+
+  if (!output) return null;
+
+  if (output.status === "question") {
+    return (
+      <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px] px-3 py-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <BrainCircuit size={14} className="text-[#5BA8A0]" />
+          <span className="font-medium text-[#1a1a1a]">Recall Challenge</span>
+          <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+            {output.topic}
+          </span>
+        </div>
+        <p className="text-[#5BA8A0] italic leading-snug">{output.question}</p>
+        {output.hint ? (
+          <p className="text-[#8b8b8b] leading-snug text-[12px]">
+            Hint: {output.hint}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  // Feedback phase
+  const fb = output.feedback;
+  if (!fb) return null;
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px] px-3 py-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <BrainCircuit size={14} className="text-[#5BA8A0]" />
+        <span className="font-medium text-[#1a1a1a]">Recall Feedback</span>
+        <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+          {output.topic}
+        </span>
+        <span
+          className={`rounded px-1.5 py-0.5 text-[11px] ${assessmentColor[fb.assessment]}`}
+        >
+          {assessmentLabel[fb.assessment]}
+        </span>
+      </div>
+      {fb.whatWasRight.length > 0 ? (
+        <div>
+          <span className="font-medium text-emerald-600">
+            What you got right:
+          </span>
+          <ul className="mt-1 space-y-0.5">
+            {fb.whatWasRight.map((item) => (
+              <li
+                key={item}
+                className="flex gap-1.5 text-[#1a1a1a] leading-snug"
+              >
+                <span className="text-emerald-500 shrink-0">+</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {fb.whatWasMissed.length > 0 ? (
+        <div>
+          <span className="font-medium text-red-500">What was missed:</span>
+          <ul className="mt-1 space-y-0.5">
+            {fb.whatWasMissed.map((item) => (
+              <li
+                key={item}
+                className="flex gap-1.5 text-[#1a1a1a] leading-snug"
+              >
+                <span className="text-red-400 shrink-0">&minus;</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <p className="text-[#1a1a1a] leading-snug">{fb.correctedExplanation}</p>
+      <p className="text-[#5BA8A0] font-medium italic leading-snug">
+        {fb.followUpQuestion}
+      </p>
+    </div>
+  );
+}
+
+interface ProgressiveDisclosureLayer {
+  level: number;
+  title: string;
+  explanation: string;
+  analogy?: string;
+  readinessQuestion: string;
+}
+
+interface ProgressiveDisclosureOutput {
+  concept: string;
+  layers: ProgressiveDisclosureLayer[];
+  currentLevel: number;
+}
+
+function ProgressiveDisclosurePart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: ProgressiveDisclosureOutput;
+}) {
+  const [revealedLevel, setRevealedLevel] = useState(1);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <Layers size={14} className="animate-pulse" />
+        Building layered explanation...
+      </div>
+    );
+  }
+
+  if (!output) return null;
+
+  const { layers } = output;
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px] px-3 py-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <Layers size={14} className="text-[#5BA8A0]" />
+        <span className="font-medium text-[#1a1a1a]">{output.concept}</span>
+      </div>
+
+      {/* Level progress indicator */}
+      <div className="flex items-center gap-1.5">
+        {layers.map((layer) => (
+          <div
+            key={layer.level}
+            className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-medium ${
+              layer.level <= revealedLevel
+                ? "bg-[#5BA8A0] text-white"
+                : "bg-[#d4eeec] text-[#8b8b8b]"
+            }`}
+          >
+            {layer.level}
+          </div>
+        ))}
+      </div>
+
+      {/* Revealed layers */}
+      {layers
+        .filter((layer) => layer.level <= revealedLevel)
+        .map((layer) => (
+          <div
+            key={layer.level}
+            className="border-l-2 border-[#5BA8A0] pl-3 space-y-1"
+          >
+            <p className="font-medium text-[#1a1a1a]">
+              Level {layer.level}: {layer.title}
+            </p>
+            <p className="text-[#1a1a1a] leading-snug">{layer.explanation}</p>
+            {layer.analogy ? (
+              <p className="text-[#8b8b8b] italic leading-snug">
+                {layer.analogy}
+              </p>
+            ) : null}
+            <p className="text-[#5BA8A0] italic leading-snug">
+              {layer.readinessQuestion}
+            </p>
+          </div>
+        ))}
+
+      {/* Go deeper button */}
+      {revealedLevel < layers.length ? (
+        <button
+          type="button"
+          onClick={() => setRevealedLevel((l) => l + 1)}
+          className="flex items-center gap-1.5 rounded-lg border border-[#5BA8A0] px-3 py-1.5 text-[12px] font-medium text-[#5BA8A0] transition-colors hover:bg-[#5BA8A0] hover:text-white"
+        >
+          Go deeper
+          <ChevronDown size={12} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function removeFileAtIndex(files: FileList, index: number): FileList {
   const dt = new DataTransfer();
   for (let i = 0; i < files.length; i++) {
@@ -1456,6 +1679,30 @@ function ChatView({
                     diagramType: "flowchart" | "sequence" | "class";
                     mermaidSyntax: string;
                   })
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-retrievalPractice") {
+        elements.push(
+          <RetrievalPracticePart
+            key={`rp-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as RetrievalPracticeOutput)
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-progressiveDisclosure") {
+        elements.push(
+          <ProgressiveDisclosurePart
+            key={`pd-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as ProgressiveDisclosureOutput)
                 : undefined
             }
           />,
