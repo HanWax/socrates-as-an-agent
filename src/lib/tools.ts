@@ -58,9 +58,14 @@ export const tools = {
       topic: z.string().optional().describe("The topic area of the insight"),
     }),
     async execute({ insight, topic }) {
-      const sql = getDb();
-      await sql`INSERT INTO insights (insight, topic) VALUES (${insight}, ${topic ?? null})`;
-      return { saved: true, insight, topic: topic ?? null };
+      try {
+        const sql = getDb();
+        await sql`INSERT INTO insights (insight, topic) VALUES (${insight}, ${topic ?? null})`;
+        return { saved: true, insight, topic: topic ?? null };
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Unknown error";
+        return { saved: false, insight, topic: topic ?? null, error: message };
+      }
     },
   }),
 };

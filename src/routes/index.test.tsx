@@ -258,7 +258,7 @@ describe("Chat", () => {
   });
 
   describe("keyboard interaction", () => {
-    it("calls sendMessage when Enter is pressed with input", () => {
+    it("calls sendMessage when Cmd+Enter is pressed with input", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
@@ -266,14 +266,14 @@ describe("Chat", () => {
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
-      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
+      fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
 
       expect(mockSendMessage).toHaveBeenCalledWith(
         expect.objectContaining({ text: "What is virtue?" }),
       );
     });
 
-    it("does not submit when Shift+Enter is pressed", () => {
+    it("calls sendMessage when Ctrl+Enter is pressed with input", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
@@ -281,19 +281,34 @@ describe("Chat", () => {
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
-      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
+      fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
-      expect(mockSendMessage).not.toHaveBeenCalled();
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "What is virtue?" }),
+      );
     });
 
-    it("does not submit when input is empty", () => {
+    it("does not submit on plain Enter", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
         "Share a thought or belief...",
       );
 
-      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
+      fireEvent.change(textarea, { target: { value: "What is virtue?" } });
+      fireEvent.keyDown(textarea, { key: "Enter" });
+
+      expect(mockSendMessage).not.toHaveBeenCalled();
+    });
+
+    it("does not submit when Cmd+Enter is pressed with empty input", () => {
+      useChatDefaults();
+      render(<Chat />);
+      const textarea = screen.getByPlaceholderText(
+        "Share a thought or belief...",
+      );
+
+      fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
 
       expect(mockSendMessage).not.toHaveBeenCalled();
     });
@@ -306,7 +321,7 @@ describe("Chat", () => {
       );
 
       fireEvent.change(textarea, { target: { value: "Hello" } });
-      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
+      fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
 
       expect(mockSendMessage).not.toHaveBeenCalled();
     });
