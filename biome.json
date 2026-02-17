@@ -15,7 +15,7 @@
     }
   },
   "files": {
-    "includes": ["**", "!src/routeTree.gen.ts", "!dist", "!.output"]
+    "includes": ["**", "!src/routeTree.gen.ts", "!dist", "!.output", "!.vercel"]
   },
   "css": {
     "parser": {

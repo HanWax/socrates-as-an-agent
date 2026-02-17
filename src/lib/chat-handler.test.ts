@@ -12,22 +12,51 @@ vi.mock("ai", () => ({
 }));
 vi.mock("./model", () => ({
   getModelById: vi.fn(() => ({ provider: "mock", model: "test-model" })),
+  isValidModelId: vi.fn(() => true),
 }));
 vi.mock("./tools", () => ({
   tools: { webSearch: { mock: true }, saveInsight: { mock: true } },
 }));
+vi.mock("./logger", () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+vi.mock("./rate-limit", () => ({
+  checkRateLimit: vi.fn(() => ({ allowed: true, remaining: 19 })),
+  getClientIp: vi.fn(() => "127.0.0.1"),
+}));
 
 import { streamText } from "ai";
 import { handleChatPost, SYSTEM_PROMPT } from "./chat-handler";
-import { getModelById } from "./model";
+import { logger } from "./logger";
+import { getModelById, isValidModelId } from "./model";
+import { checkRateLimit } from "./rate-limit";
 import { tools } from "./tools";
 
-function createRequest(body: unknown): Request {
+function createRequest(
+  body: unknown,
+  headers?: Record<string, string>,
+): Request {
+  const json = JSON.stringify(body);
   return new Request("http://localhost:3000/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Length": String(new TextEncoder().encode(json).byteLength),
+      ...headers,
+    },
+    body: json,
   });
+}
+
+function setupStreamTextMock() {
+  const mockResponse = new Response("streamed", { status: 200 });
+  const mockResult = {
+    toUIMessageStreamResponse: vi.fn(() => mockResponse),
+  };
+  vi.mocked(streamText).mockReturnValue(
+    mockResult as ReturnType<typeof streamText>,
+  );
+  return { mockResult, mockResponse };
 }
 
 describe("SYSTEM_PROMPT", () => {
@@ -58,16 +87,16 @@ describe("SYSTEM_PROMPT", () => {
 describe("handleChatPost", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(checkRateLimit).mockReturnValue({
+      allowed: true,
+      remaining: 19,
+    });
+    vi.mocked(isValidModelId).mockReturnValue(true);
+    delete process.env.CHAT_API_KEY;
   });
 
   it("calls streamText with system prompt, model, tools, and converted messages", async () => {
-    const mockResponse = new Response("streamed", { status: 200 });
-    const mockResult = {
-      toUIMessageStreamResponse: vi.fn(() => mockResponse),
-    };
-    vi.mocked(streamText).mockReturnValue(
-      mockResult as ReturnType<typeof streamText>,
-    );
+    const { mockResult, mockResponse } = setupStreamTextMock();
 
     const messages = [{ role: "user", content: "What is justice?" }];
     const request = createRequest({ messages });
@@ -91,12 +120,7 @@ describe("handleChatPost", () => {
   });
 
   it("passes multi-turn conversation messages through convertToModelMessages", async () => {
-    const mockResult = {
-      toUIMessageStreamResponse: vi.fn(() => new Response()),
-    };
-    vi.mocked(streamText).mockReturnValue(
-      mockResult as ReturnType<typeof streamText>,
-    );
+    setupStreamTextMock();
 
     const messages = [
       { role: "user", content: "What is virtue?" },
@@ -116,12 +140,7 @@ describe("handleChatPost", () => {
   });
 
   it("uses the model returned by getModelById()", async () => {
-    const mockResult = {
-      toUIMessageStreamResponse: vi.fn(() => new Response()),
-    };
-    vi.mocked(streamText).mockReturnValue(
-      mockResult as ReturnType<typeof streamText>,
-    );
+    setupStreamTextMock();
 
     const request = createRequest({ messages: [] });
     await handleChatPost(request);
@@ -135,12 +154,7 @@ describe("handleChatPost", () => {
   });
 
   it("passes modelId from request body to getModelById", async () => {
-    const mockResult = {
-      toUIMessageStreamResponse: vi.fn(() => new Response()),
-    };
-    vi.mocked(streamText).mockReturnValue(
-      mockResult as ReturnType<typeof streamText>,
-    );
+    setupStreamTextMock();
 
     const request = createRequest({ messages: [], modelId: "gpt-4o" });
     await handleChatPost(request);
@@ -148,12 +162,241 @@ describe("handleChatPost", () => {
     expect(getModelById).toHaveBeenCalledWith("gpt-4o");
   });
 
-  it("rejects non-JSON request bodies", async () => {
+  it("returns 400 for non-JSON request bodies", async () => {
     const request = new Request("http://localhost:3000/api/chat", {
       method: "POST",
+      headers: { "Content-Length": "8" },
       body: "not json",
     });
 
-    await expect(handleChatPost(request)).rejects.toThrow();
+    const response = await handleChatPost(request);
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toBe("Invalid JSON");
+  });
+});
+
+describe("rate limiting", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env.CHAT_API_KEY;
+  });
+
+  it("returns 429 when rate limit is exceeded", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue({
+      allowed: false,
+      remaining: 0,
+      retryAfterMs: 30000,
+    });
+
+    const request = createRequest({ messages: [] });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(429);
+    const json = await response.json();
+    expect(json.error).toContain("Too many requests");
+  });
+});
+
+describe("authentication", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(checkRateLimit).mockReturnValue({
+      allowed: true,
+      remaining: 19,
+    });
+  });
+
+  it("returns 401 when CHAT_API_KEY is set but no token provided", async () => {
+    process.env.CHAT_API_KEY = "secret-key";
+
+    const request = createRequest({ messages: [] });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(401);
+    delete process.env.CHAT_API_KEY;
+  });
+
+  it("returns 401 when token does not match", async () => {
+    process.env.CHAT_API_KEY = "secret-key";
+
+    const request = createRequest(
+      { messages: [] },
+      {
+        Authorization: "Bearer wrong-key",
+      },
+    );
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(401);
+    delete process.env.CHAT_API_KEY;
+  });
+
+  it("allows request when token matches", async () => {
+    process.env.CHAT_API_KEY = "secret-key";
+    setupStreamTextMock();
+
+    const request = createRequest(
+      { messages: [] },
+      {
+        Authorization: "Bearer secret-key",
+      },
+    );
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(200);
+    delete process.env.CHAT_API_KEY;
+  });
+
+  it("allows request when CHAT_API_KEY is not configured", async () => {
+    delete process.env.CHAT_API_KEY;
+    setupStreamTextMock();
+
+    const request = createRequest({ messages: [] });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(200);
+  });
+});
+
+describe("request validation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(checkRateLimit).mockReturnValue({
+      allowed: true,
+      remaining: 19,
+    });
+    delete process.env.CHAT_API_KEY;
+  });
+
+  it("returns 400 when messages exceed max count", async () => {
+    const messages = Array.from({ length: 101 }, (_, i) => ({
+      role: "user",
+      content: `msg ${i}`,
+    }));
+
+    const request = createRequest({ messages });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("Too many messages");
+  });
+
+  it("returns 400 when text part is too long", async () => {
+    const messages = [
+      {
+        role: "user",
+        content: "x",
+        parts: [{ type: "text", text: "a".repeat(10_001) }],
+      },
+    ];
+
+    const request = createRequest({ messages });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("Text too long");
+  });
+
+  it("returns 400 for disallowed MIME types", async () => {
+    const messages = [
+      {
+        role: "user",
+        content: "x",
+        parts: [{ type: "file", mediaType: "application/pdf", data: "abc" }],
+      },
+    ];
+
+    const request = createRequest({ messages });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("File type not allowed");
+  });
+
+  it("returns 400 when too many files per message", async () => {
+    const fileParts = Array.from({ length: 5 }, () => ({
+      type: "file",
+      mediaType: "image/png",
+      data: "abc",
+    }));
+    const messages = [{ role: "user", content: "x", parts: fileParts }];
+
+    const request = createRequest({ messages });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("Too many files");
+  });
+
+  it("returns 400 when body exceeds max size", async () => {
+    const request = new Request("http://localhost:3000/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": String(10 * 1024 * 1024),
+      },
+      body: JSON.stringify({ messages: [] }),
+    });
+
+    const response = await handleChatPost(request);
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain("too large");
+  });
+});
+
+describe("error handling", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(checkRateLimit).mockReturnValue({
+      allowed: true,
+      remaining: 19,
+    });
+    delete process.env.CHAT_API_KEY;
+  });
+
+  it("returns 500 when streamText throws", async () => {
+    vi.mocked(streamText).mockImplementation(() => {
+      throw new Error("LLM provider down");
+    });
+
+    const request = createRequest({ messages: [] });
+    const response = await handleChatPost(request);
+
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBe("Internal server error");
+  });
+
+  it("does not leak internal error details to client", async () => {
+    vi.mocked(streamText).mockImplementation(() => {
+      throw new Error("SECRET_API_KEY_INVALID");
+    });
+
+    const request = createRequest({ messages: [] });
+    const response = await handleChatPost(request);
+
+    const json = await response.json();
+    expect(json.error).not.toContain("SECRET");
+    expect(json.error).toBe("Internal server error");
+  });
+
+  it("logs the actual error", async () => {
+    vi.mocked(streamText).mockImplementation(() => {
+      throw new Error("LLM provider down");
+    });
+
+    const request = createRequest({ messages: [] });
+    await handleChatPost(request);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      "chat_error",
+      expect.objectContaining({ error: "LLM provider down" }),
+    );
   });
 });

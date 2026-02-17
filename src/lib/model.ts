@@ -46,6 +46,11 @@ export function getAvailableModels(): ModelOption[] {
   );
 }
 
+export function isValidModelId(id: string): boolean {
+  if (id === "") return true;
+  return MODEL_OPTIONS.some((m) => m.id === id);
+}
+
 export function getModelById(id: string) {
   const available = getAvailableModels();
   const match = available.find((m) => m.id === id);

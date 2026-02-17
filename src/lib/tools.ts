@@ -7,7 +7,7 @@ export const tools = {
     description:
       "Search the web for current facts or evidence relevant to the topic being discussed. Use this to ground your Socratic questions in real-world information.",
     inputSchema: z.object({
-      query: z.string().describe("The search query"),
+      query: z.string().max(500).describe("The search query"),
     }),
     async execute({ query }) {
       const apiKey = process.env.TAVILY_API_KEY;
@@ -54,8 +54,13 @@ export const tools = {
     inputSchema: z.object({
       insight: z
         .string()
+        .max(1000)
         .describe("The insight or realization the user reached"),
-      topic: z.string().optional().describe("The topic area of the insight"),
+      topic: z
+        .string()
+        .max(100)
+        .optional()
+        .describe("The topic area of the insight"),
     }),
     async execute({ insight, topic }) {
       try {

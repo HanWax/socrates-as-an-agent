@@ -1,6 +1,16 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { BookmarkCheck, ChevronDown, Globe, ImagePlus, X } from "lucide-react";
+import {
+  BookmarkCheck,
+  Brain,
+  ChevronDown,
+  Globe,
+  ImagePlus,
+  ShieldCheck,
+  Swords,
+  Users,
+  X,
+} from "lucide-react";
 import {
   type ChangeEvent,
   type DragEvent,
@@ -17,6 +27,21 @@ interface ModelOption {
   id: string;
   name: string;
   provider: string;
+}
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_COUNT = 4;
+const ALLOWED_FILE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
+function filterValidFiles(fileList: File[]): File[] {
+  return fileList
+    .filter((f) => ALLOWED_FILE_TYPES.has(f.type) && f.size <= MAX_FILE_SIZE)
+    .slice(0, MAX_FILE_COUNT);
 }
 
 export const Route = createFileRoute("/")({ component: Chat });
@@ -113,6 +138,308 @@ function SaveInsightPart({
   );
 }
 
+interface DevilsAdvocateOutput {
+  userPosition: string;
+  steelmanArgument: string;
+  keyEvidence: string[];
+  challengeQuestion: string;
+}
+
+function DevilsAdvocatePart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: DevilsAdvocateOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <Swords size={14} className="animate-pulse" />
+        Building strongest counterargument...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <Swords size={14} className="text-[#5BA8A0]" />
+        Devil's Advocate
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output && (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+          <p className="text-[#8b8b8b]">
+            <span className="font-medium text-[#1a1a1a]">Your position: </span>
+            {output.userPosition}
+          </p>
+          <p className="text-[#1a1a1a] leading-snug">
+            <span className="font-medium">Steelman: </span>
+            {output.steelmanArgument}
+          </p>
+          {output.keyEvidence.length > 0 && (
+            <div>
+              <span className="font-medium text-[#1a1a1a]">Key evidence:</span>
+              <ul className="mt-1 space-y-1 text-[#1a1a1a]">
+                {output.keyEvidence.map((e) => (
+                  <li key={e} className="flex gap-1.5 leading-snug">
+                    <span className="text-[#5BA8A0] shrink-0">&#8226;</span>
+                    {e}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="text-[#5BA8A0] font-medium italic leading-snug">
+            {output.challengeQuestion}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FactCheckOutput {
+  claim: string;
+  verdict: "supported" | "partially_supported" | "unsupported" | "unverifiable";
+  analysis: string;
+  evidenceFor: string[];
+  evidenceAgainst: string[];
+}
+
+const verdictLabel: Record<FactCheckOutput["verdict"], string> = {
+  supported: "Supported",
+  partially_supported: "Partially Supported",
+  unsupported: "Unsupported",
+  unverifiable: "Unverifiable",
+};
+
+const verdictColor: Record<FactCheckOutput["verdict"], string> = {
+  supported: "text-emerald-600",
+  partially_supported: "text-amber-600",
+  unsupported: "text-red-500",
+  unverifiable: "text-[#8b8b8b]",
+};
+
+function FactCheckPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: FactCheckOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <ShieldCheck size={14} className="animate-pulse" />
+        Checking claim...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <ShieldCheck size={14} className="text-[#5BA8A0]" />
+        Fact Check
+        {output && (
+          <span className={`text-xs ${verdictColor[output.verdict]}`}>
+            — {verdictLabel[output.verdict]}
+          </span>
+        )}
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output && (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+          <p className="text-[#8b8b8b]">
+            <span className="font-medium text-[#1a1a1a]">Claim: </span>
+            &ldquo;{output.claim}&rdquo;
+          </p>
+          <p className="text-[#1a1a1a] leading-snug">{output.analysis}</p>
+          {output.evidenceFor.length > 0 && (
+            <div>
+              <span className="font-medium text-emerald-600">
+                Evidence for:
+              </span>
+              <ul className="mt-1 space-y-1 text-[#1a1a1a]">
+                {output.evidenceFor.map((e) => (
+                  <li key={e} className="flex gap-1.5 leading-snug">
+                    <span className="text-emerald-500 shrink-0">+</span>
+                    {e}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {output.evidenceAgainst.length > 0 && (
+            <div>
+              <span className="font-medium text-red-500">
+                Evidence against:
+              </span>
+              <ul className="mt-1 space-y-1 text-[#1a1a1a]">
+                {output.evidenceAgainst.map((e) => (
+                  <li key={e} className="flex gap-1.5 leading-snug">
+                    <span className="text-red-400 shrink-0">&minus;</span>
+                    {e}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface LogicalAnalysisOutput {
+  userReasoning: string;
+  fallacy: string;
+  explanation: string;
+  example: string;
+  betterFraming: string;
+}
+
+function LogicalAnalysisPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: LogicalAnalysisOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <Brain size={14} className="animate-pulse" />
+        Analyzing reasoning...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <Brain size={14} className="text-[#5BA8A0]" />
+        Logical Analysis
+        {output && (
+          <span className="text-xs text-[#8b8b8b]">— {output.fallacy}</span>
+        )}
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output && (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+          <p className="text-[#8b8b8b]">
+            <span className="font-medium text-[#1a1a1a]">Your reasoning: </span>
+            &ldquo;{output.userReasoning}&rdquo;
+          </p>
+          <p className="text-[#1a1a1a] leading-snug">
+            <span className="font-medium">Why it's a problem: </span>
+            {output.explanation}
+          </p>
+          <p className="text-[#1a1a1a] leading-snug italic">
+            <span className="font-medium not-italic">Analogy: </span>
+            {output.example}
+          </p>
+          <p className="text-[#5BA8A0] leading-snug">
+            <span className="font-medium">Better framing: </span>
+            {output.betterFraming}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface PerspectiveOutput {
+  stakeholder: string;
+  position: string;
+  reasoning: string;
+}
+
+interface PerspectiveShiftOutput {
+  topic: string;
+  perspectives: PerspectiveOutput[];
+  blindSpotQuestion: string;
+}
+
+function PerspectiveShiftPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: PerspectiveShiftOutput;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <Users size={14} className="animate-pulse" />
+        Gathering perspectives...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <Users size={14} className="text-[#5BA8A0]" />
+        Perspective Shift — {output?.perspectives.length ?? 0} viewpoints
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && output && (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
+          {output.perspectives.map((p) => (
+            <div key={p.stakeholder}>
+              <p className="font-medium text-[#1a1a1a]">{p.stakeholder}</p>
+              <p className="text-[#1a1a1a] leading-snug">{p.position}</p>
+              <p className="text-[#8b8b8b] leading-snug">{p.reasoning}</p>
+            </div>
+          ))}
+          <p className="text-[#5BA8A0] font-medium italic leading-snug">
+            {output.blindSpotQuestion}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function removeFileAtIndex(files: FileList, index: number): FileList {
   const dt = new DataTransfer();
   for (let i = 0; i < files.length; i++) {
@@ -193,7 +520,12 @@ export function Chat() {
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(e.target.files);
+      const valid = filterValidFiles(Array.from(e.target.files));
+      if (valid.length > 0) {
+        const dt = new DataTransfer();
+        for (const f of valid) dt.items.add(f);
+        setFiles(dt.files);
+      }
     }
   };
 
@@ -221,13 +553,10 @@ export function Chat() {
   const handleDrop = (e: DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const dt = new DataTransfer();
-    for (const file of Array.from(e.dataTransfer.files)) {
-      if (file.type.startsWith("image/")) {
-        dt.items.add(file);
-      }
-    }
-    if (dt.files.length > 0) {
+    const valid = filterValidFiles(Array.from(e.dataTransfer.files));
+    if (valid.length > 0) {
+      const dt = new DataTransfer();
+      for (const f of valid) dt.items.add(f);
       setFiles(dt.files);
     }
   };
@@ -278,7 +607,7 @@ export function Chat() {
     <input
       ref={fileInputRef}
       type="file"
-      accept="image/*"
+      accept="image/jpeg,image/png,image/gif,image/webp"
       multiple
       onChange={handleFileChange}
       className="hidden"
@@ -348,6 +677,54 @@ export function Chat() {
                     insight: string;
                     topic: string | null;
                   })
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-devilsAdvocate") {
+        elements.push(
+          <DevilsAdvocatePart
+            key={`da-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as DevilsAdvocateOutput)
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-factCheck") {
+        elements.push(
+          <FactCheckPart
+            key={`fc-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as FactCheckOutput)
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-logicalAnalysis") {
+        elements.push(
+          <LogicalAnalysisPart
+            key={`la-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as LogicalAnalysisOutput)
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-perspectiveShift") {
+        elements.push(
+          <PerspectiveShiftPart
+            key={`ps-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as PerspectiveShiftOutput)
                 : undefined
             }
           />,

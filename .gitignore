@@ -10,6 +10,7 @@ count.txt
 .wrangler
 .output
 .vercel
+.agents
 .vinxi
 __unconfig*
 todos.json

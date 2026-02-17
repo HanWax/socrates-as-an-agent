@@ -7,7 +7,7 @@ vi.mock("@ai-sdk/openai", () => ({
   openai: vi.fn((model: string) => ({ provider: "openai", model })),
 }));
 
-import { getAvailableModels, getModelById } from "./model";
+import { getAvailableModels, getModelById, isValidModelId } from "./model";
 
 describe("getAvailableModels", () => {
   const origAnthropic = process.env.ANTHROPIC_API_KEY;
@@ -90,5 +90,19 @@ describe("getModelById", () => {
     delete process.env.ANTHROPIC_API_KEY;
     delete process.env.OPENAI_API_KEY;
     expect(() => getModelById("anything")).toThrow("No model available");
+  });
+});
+
+describe("isValidModelId", () => {
+  it("returns true for empty string (default)", () => {
+    expect(isValidModelId("")).toBe(true);
+  });
+
+  it("returns true for a known model id", () => {
+    expect(isValidModelId("gpt-4o")).toBe(true);
+  });
+
+  it("returns false for an unknown model id", () => {
+    expect(isValidModelId("nonexistent-model")).toBe(false);
   });
 });

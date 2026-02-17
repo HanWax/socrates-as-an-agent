@@ -34,3 +34,7 @@ This is a Socratic method chatbot — a single-page streaming chat app.
 **Styling**: Tailwind CSS v4 via `@tailwindcss/vite` plugin. Global styles in `src/styles.css`. The app uses a custom color palette with hex values (not Tailwind theme tokens).
 
 **Path aliases**: `@/*` maps to `./src/*` (configured in both `tsconfig.json` and `vite.config.ts`).
+
+## Code Style
+
+**Conditional rendering**: Never use `&&` for conditional rendering in React. Always use ternaries (`condition ? <Component /> : null`).
