@@ -90,7 +90,7 @@ export function Chat() {
   }, [input, isLoading, sendMessage, files, hasFiles]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       submit();
     }
@@ -215,12 +215,14 @@ export function Chat() {
           );
         } else {
           elements.push(
-            <p
+            <div
               key={`text-${part.text.slice(0, 32)}`}
-              className="whitespace-pre-wrap text-[15px] leading-relaxed"
+              className="prose-user text-[15px] leading-relaxed"
             >
-              {part.text}
-            </p>,
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {part.text}
+              </ReactMarkdown>
+            </div>,
           );
         }
       } else if (
