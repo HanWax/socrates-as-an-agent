@@ -1,4 +1,4 @@
-import { streamText } from "ai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { getModel } from "./model";
 
 export const SYSTEM_PROMPT = `You are Socrates, the ancient Greek philosopher, reborn as a thoughtful conversational guide. Your purpose is to help people think more clearly and deeply using the Socratic method.
@@ -12,16 +12,17 @@ Core principles:
 - Keep questions focused. Ask one or two questions at a time, not a barrage.
 - When a user is stuck, offer a hypothetical or analogy to open a new angle of thinking, then ask a question about it.
 - If the conversation is just beginning, ask the user what topic, question, or belief they'd like to explore together.
+- If the user shares an image, examine it thoughtfully and use it as a springboard for Socratic questioning. Ask what they see in it, why they shared it, or what assumptions it might reveal.
 
 Remember: your goal is not to show how much you know, but to help the other person discover what they think — and whether it holds up to scrutiny.`;
 
 export async function handleChatPost(request: Request): Promise<Response> {
-  const { messages } = await request.json();
+  const { messages } = (await request.json()) as { messages: UIMessage[] };
 
   const result = streamText({
     model: getModel(),
     system: SYSTEM_PROMPT,
-    messages,
+    messages: convertToModelMessages(messages),
   });
 
   return result.toUIMessageStreamResponse();

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const mockConvertToModelMessages = vi.fn((msgs: unknown) => msgs);
+
 vi.mock("ai", () => ({
   streamText: vi.fn(),
+  convertToModelMessages: (...args: unknown[]) =>
+    mockConvertToModelMessages(...args),
 }));
 vi.mock("./model", () => ({
   getModel: vi.fn(() => ({ provider: "mock", model: "test-model" })),
@@ -33,6 +37,10 @@ describe("SYSTEM_PROMPT", () => {
   it("instructs to keep questions focused", () => {
     expect(SYSTEM_PROMPT).toContain("one or two questions at a time");
   });
+
+  it("instructs how to handle images", () => {
+    expect(SYSTEM_PROMPT).toContain("image");
+  });
 });
 
 describe("handleChatPost", () => {
@@ -40,7 +48,7 @@ describe("handleChatPost", () => {
     vi.clearAllMocks();
   });
 
-  it("calls streamText with system prompt, model, and messages", async () => {
+  it("calls streamText with system prompt, model, and converted messages", async () => {
     const mockResponse = new Response("streamed", { status: 200 });
     const mockResult = {
       toUIMessageStreamResponse: vi.fn(() => mockResponse),
@@ -54,6 +62,7 @@ describe("handleChatPost", () => {
 
     const response = await handleChatPost(request);
 
+    expect(mockConvertToModelMessages).toHaveBeenCalledWith(messages);
     expect(streamText).toHaveBeenCalledOnce();
     expect(streamText).toHaveBeenCalledWith({
       model: { provider: "mock", model: "test-model" },
@@ -64,7 +73,7 @@ describe("handleChatPost", () => {
     expect(response).toBe(mockResponse);
   });
 
-  it("passes multi-turn conversation messages to streamText", async () => {
+  it("passes multi-turn conversation messages through convertToModelMessages", async () => {
     const mockResult = {
       toUIMessageStreamResponse: vi.fn(() => new Response()),
     };
@@ -81,6 +90,7 @@ describe("handleChatPost", () => {
 
     await handleChatPost(request);
 
+    expect(mockConvertToModelMessages).toHaveBeenCalledWith(messages);
     expect(streamText).toHaveBeenCalledWith(
       expect.objectContaining({ messages }),
     );

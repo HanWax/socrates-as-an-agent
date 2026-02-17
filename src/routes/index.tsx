@@ -1,8 +1,9 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
+import { ImagePlus, X } from "lucide-react";
 import {
   type ChangeEvent,
-  type FormEvent,
+  type DragEvent,
   type KeyboardEvent,
   useCallback,
   useEffect,
@@ -14,11 +15,22 @@ export const Route = createFileRoute("/")({ component: Chat });
 
 const composerShadow = "10px 10px 18px rgba(166, 180, 200, 0.4)";
 
+function removeFileAtIndex(files: FileList, index: number): FileList {
+  const dt = new DataTransfer();
+  for (let i = 0; i < files.length; i++) {
+    if (i !== index) dt.items.add(files[i]);
+  }
+  return dt.files;
+}
+
 export function Chat() {
   const { messages, sendMessage, status } = useChat();
   const [input, setInput] = useState("");
+  const [files, setFiles] = useState<FileList | undefined>(undefined);
+  const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -41,16 +53,19 @@ export function Chat() {
 
   const isLoading = status === "streaming" || status === "submitted";
   const hasMessages = messages && messages.length > 0;
+  const hasFiles = files && files.length > 0;
 
   const submit = useCallback(() => {
     const text = input.trim();
-    if (!text || isLoading) return;
+    if ((!text && !hasFiles) || isLoading) return;
     setInput("");
-    sendMessage({ text });
+    sendMessage({ text, files });
+    setFiles(undefined);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  }, [input, isLoading, sendMessage]);
+  }, [input, isLoading, sendMessage, files, hasFiles]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -59,9 +74,134 @@ export function Chat() {
     }
   };
 
-  const handleFormSubmit = (e: FormEvent) => {
+  const handleFormSubmit = (e: SubmitEvent) => {
     e.preventDefault();
     submit();
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(e.target.files);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    if (!files) return;
+    const updated = removeFileAtIndex(files, index);
+    if (updated.length === 0) {
+      setFiles(undefined);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } else {
+      setFiles(updated);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const dt = new DataTransfer();
+    for (const file of Array.from(e.dataTransfer.files)) {
+      if (file.type.startsWith("image/")) {
+        dt.items.add(file);
+      }
+    }
+    if (dt.files.length > 0) {
+      setFiles(dt.files);
+    }
+  };
+
+  const filePreview = hasFiles ? (
+    <div
+      className="flex gap-2 px-5 pt-3 pb-1 overflow-x-auto"
+      data-testid="file-preview"
+    >
+      {Array.from(files).map((file, index) => (
+        <div
+          key={`${file.name}-${file.lastModified}`}
+          className="relative shrink-0 group"
+        >
+          <img
+            src={URL.createObjectURL(file)}
+            alt={file.name}
+            className="w-16 h-16 rounded-lg object-cover border border-[#d4eeec]"
+          />
+          <button
+            type="button"
+            onClick={() => removeFile(index)}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label={`Remove ${file.name}`}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
+  const uploadButton = (
+    <div className="absolute bottom-3 left-3 z-20">
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isLoading}
+        className="flex items-center justify-center w-9 h-9 rounded-lg text-[#8b8b8b] transition-all hover:text-[#5BA8A0] hover:bg-[#f0faf9] disabled:opacity-50 disabled:hover:text-[#8b8b8b] disabled:hover:bg-transparent"
+        aria-label="Upload image"
+      >
+        <ImagePlus size={18} />
+      </button>
+    </div>
+  );
+
+  const hiddenFileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={handleFileChange}
+      className="hidden"
+      data-testid="file-input"
+    />
+  );
+
+  const renderMessageParts = (message: (typeof messages)[number]) => {
+    return message.parts.map((part) => {
+      if (part.type === "text") {
+        return (
+          <p
+            key={`text-${part.text.slice(0, 32)}`}
+            className="whitespace-pre-wrap text-[15px] leading-relaxed"
+          >
+            {part.text}
+          </p>
+        );
+      }
+      if (
+        part.type === "file" &&
+        typeof part.mediaType === "string" &&
+        part.mediaType.startsWith("image/")
+      ) {
+        return (
+          <img
+            key={`file-${part.mediaType}-${String(part.data).slice(0, 16)}`}
+            src={`data:${part.mediaType};base64,${part.data}`}
+            alt="Uploaded content"
+            className="max-w-full rounded-lg mt-2 mb-1"
+          />
+        );
+      }
+      return null;
+    });
   };
 
   // Empty state
@@ -80,11 +220,19 @@ export function Chat() {
           <p className="text-sm text-[#8b8b8b] mb-8">
             Socrates will question your assumptions.
           </p>
-          <form onSubmit={handleFormSubmit} className="w-full max-w-2xl">
+          <form
+            onSubmit={handleFormSubmit}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className="w-full max-w-2xl"
+          >
+            {hiddenFileInput}
             <div
-              className="relative rounded-2xl border border-[#d4eeec] bg-white transition-all focus-within:border-[#5BA8A0]"
+              className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#5BA8A0] ${isDragging ? "border-[#5BA8A0] border-dashed border-2" : "border-[#d4eeec]"}`}
               style={{ boxShadow: composerShadow }}
             >
+              {filePreview}
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -92,13 +240,14 @@ export function Chat() {
                 onKeyDown={handleKeyDown}
                 placeholder="Share a thought or belief..."
                 rows={3}
-                className="relative z-10 w-full resize-none bg-transparent px-5 pt-4 pb-14 text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none"
+                className="relative z-10 w-full resize-none bg-transparent pl-14 pr-5 pt-4 pb-14 text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none"
                 disabled={isLoading}
               />
+              {uploadButton}
               <div className="absolute bottom-3 right-3 z-20">
                 <button
                   type="submit"
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || (!input.trim() && !hasFiles)}
                   className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#5BA8A0] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#d4eeec] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
                 >
                   <svg
@@ -128,6 +277,17 @@ export function Chat() {
   // Conversation view
   return (
     <div className="flex flex-col h-screen bg-[#fafafa]">
+      {/* Sticky Socrates header */}
+      <div className="shrink-0 flex items-center gap-3 px-6 py-3 bg-[#fafafa] border-b border-[#eae7e3]">
+        <img src="/socrates.svg" alt="Socrates" className="w-10 h-10" />
+        <div>
+          <h1 className="text-base font-medium text-[#1a1a1a] leading-tight">
+            Socrates
+          </h1>
+          <p className="text-xs text-[#8b8b8b]">Questioning your assumptions</p>
+        </div>
+      </div>
+
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
           {messages.map((message) => (
@@ -138,12 +298,7 @@ export function Chat() {
                     className="max-w-[85%] rounded-2xl bg-[#5BA8A0] px-5 py-3 text-white"
                     style={{ boxShadow: composerShadow }}
                   >
-                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                      {message.parts
-                        .filter((part) => part.type === "text")
-                        .map((part) => part.text)
-                        .join("")}
-                    </p>
+                    {renderMessageParts(message)}
                   </div>
                 </div>
               ) : (
@@ -153,14 +308,7 @@ export function Chat() {
                     alt=""
                     className="w-8 h-8 rounded-full object-cover shrink-0 mt-1"
                   />
-                  <div className="min-w-0">
-                    <p className="whitespace-pre-wrap text-[15px] text-[#1a1a1a] leading-relaxed">
-                      {message.parts
-                        .filter((part) => part.type === "text")
-                        .map((part) => part.text)
-                        .join("")}
-                    </p>
-                  </div>
+                  <div className="min-w-0">{renderMessageParts(message)}</div>
                 </div>
               )}
             </div>
@@ -187,11 +335,19 @@ export function Chat() {
 
       {/* Pinned composer at bottom */}
       <div className="shrink-0 border-t border-[#eae7e3] bg-[#fafafa] px-4 py-4">
-        <form onSubmit={handleFormSubmit} className="mx-auto max-w-2xl">
+        <form
+          onSubmit={handleFormSubmit}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className="mx-auto max-w-2xl"
+        >
+          {hiddenFileInput}
           <div
-            className="relative rounded-2xl border border-[#d4eeec] bg-white transition-all focus-within:border-[#5BA8A0]"
+            className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#5BA8A0] ${isDragging ? "border-[#5BA8A0] border-dashed border-2" : "border-[#d4eeec]"}`}
             style={{ boxShadow: composerShadow }}
           >
+            {filePreview}
             <textarea
               ref={textareaRef}
               value={input}
@@ -199,13 +355,14 @@ export function Chat() {
               onKeyDown={handleKeyDown}
               placeholder="Reply..."
               rows={1}
-              className="relative z-10 w-full resize-none bg-transparent px-5 pt-3.5 pb-12 text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none"
+              className="relative z-10 w-full resize-none bg-transparent pl-14 pr-5 pt-3.5 pb-12 text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none"
               disabled={isLoading}
             />
+            {uploadButton}
             <div className="absolute bottom-3 right-3 z-20">
               <button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || (!input.trim() && !hasFiles)}
                 className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#5BA8A0] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#d4eeec] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
               >
                 <svg

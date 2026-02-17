@@ -44,6 +44,22 @@ function makeMessage(id: string, role: "user" | "assistant", text: string) {
   return { id, role, parts: [{ type: "text" as const, text }] };
 }
 
+function makeImageMessage(
+  id: string,
+  role: "user" | "assistant",
+  text: string,
+  mediaType = "image/png",
+) {
+  return {
+    id,
+    role,
+    parts: [
+      { type: "text" as const, text },
+      { type: "file" as const, mediaType, data: "iVBOR" },
+    ],
+  };
+}
+
 // --- Tests ---
 
 describe("Chat", () => {
@@ -90,8 +106,10 @@ describe("Chat", () => {
 
     it("disables submit button when input is empty", () => {
       render(<Chat />);
-      const button = screen.getByRole("button");
-      expect(button.hasAttribute("disabled")).toBe(true);
+      const submitButtons = screen
+        .getAllByRole("button")
+        .filter((b) => b.getAttribute("type") === "submit");
+      expect(submitButtons[0].hasAttribute("disabled")).toBe(true);
     });
 
     it("enables submit button when input has text", () => {
@@ -101,8 +119,10 @@ describe("Chat", () => {
         "Share a thought or belief...",
       );
       fireEvent.change(textarea, { target: { value: "What is justice?" } });
-      const button = screen.getByRole("button");
-      expect(button.hasAttribute("disabled")).toBe(false);
+      const submitButtons = screen
+        .getAllByRole("button")
+        .filter((b) => b.getAttribute("type") === "submit");
+      expect(submitButtons[0].hasAttribute("disabled")).toBe(false);
     });
 
     it("disables textarea while loading", () => {
@@ -112,6 +132,12 @@ describe("Chat", () => {
         "Share a thought or belief...",
       );
       expect(textarea.hasAttribute("disabled")).toBe(true);
+    });
+
+    it("renders image upload button", () => {
+      render(<Chat />);
+      const uploadBtn = screen.getByLabelText("Upload image");
+      expect(uploadBtn).toBeDefined();
     });
   });
 
@@ -177,6 +203,28 @@ describe("Chat", () => {
       render(<Chat />);
       expect(screen.getByPlaceholderText("Reply...")).toBeDefined();
     });
+
+    it("renders image parts in user messages", () => {
+      useChatDefaults({
+        messages: [makeImageMessage("1", "user", "Look at this")],
+      });
+      const { container } = render(<Chat />);
+      const images = container.querySelectorAll('img[alt="Uploaded content"]');
+      expect(images.length).toBe(1);
+      expect(images[0].getAttribute("src")).toContain("data:image/png;base64,");
+    });
+
+    it("renders image parts in assistant messages", () => {
+      useChatDefaults({
+        messages: [
+          makeMessage("1", "user", "Hello"),
+          makeImageMessage("2", "assistant", "Here is an image"),
+        ],
+      });
+      const { container } = render(<Chat />);
+      const images = container.querySelectorAll('img[alt="Uploaded content"]');
+      expect(images.length).toBe(1);
+    });
   });
 
   describe("keyboard interaction", () => {
@@ -190,9 +238,9 @@ describe("Chat", () => {
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
       fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
 
-      expect(mockSendMessage).toHaveBeenCalledWith({
-        text: "What is virtue?",
-      });
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "What is virtue?" }),
+      );
     });
 
     it("does not submit when Shift+Enter is pressed", () => {
