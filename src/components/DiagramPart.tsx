@@ -113,13 +113,13 @@ export function DiagramPart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <PenTool size={14} className="text-[#5BA8A0]" />
+        <PenTool size={14} className="text-[#9a24b2]" />
         {output?.title ?? "Diagram"}
         <ChevronDown
           size={14}
@@ -127,13 +127,13 @@ export function DiagramPart({
         />
       </button>
       {open ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2">
+        <div className="border-t border-[#da9ee6] px-3 py-2">
           {error ? (
             <div>
               <p className="text-red-500 mb-2">
                 Could not render diagram: {error}
               </p>
-              <pre className="rounded-lg bg-[#1a1a1a] text-[#d4eeec] p-3 text-xs overflow-x-auto whitespace-pre-wrap">
+              <pre className="rounded-lg bg-[#1a1a1a] text-[#da9ee6] p-3 text-xs overflow-x-auto whitespace-pre-wrap">
                 {output?.mermaidSyntax}
               </pre>
             </div>

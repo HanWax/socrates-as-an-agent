@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+:root {
+  --berry-100: #da9ee6;
+  --berry-200: #c96edc;
+  --berry-300: #ba3cd4;
+  --berry-400: #9a24b2;
+  --berry-500: #6f1c80;
+  --berry-600: #451350;
+  --berry-700: #1c0820;
+
+  --color-2-100: #fce9ec;
+  --color-2-200: #f5b1bd;
+  --color-2-300: #f0768d;
+  --color-2-400: #ed3a5b;
+  --color-2-500: #d0173a;
+  --color-2-600: #94142c;
+  --color-2-700: #5b0e1c;
+
+  --color-3-100: #fff1e5;
+  --color-3-200: #ffc495;
+  --color-3-300: #ff9745;
+  --color-3-400: #f36b00;
+  --color-3-500: #a34800;
+
+  --color-4-100: #a6ede4;
+  --color-4-200: #56e2d1;
+  --color-4-300: #1cc2ae;
+  --color-4-400: #137065;
+  --color-4-500: #07221f;
+}
+
 body {
   @apply m-0 bg-white;
   font-family:
@@ -62,13 +92,13 @@ code {
 .prose-socrates blockquote {
   margin: 0.5em 0;
   padding-left: 1em;
-  border-left: 3px solid #5ba8a0;
+  border-left: 3px solid #9a24b2;
   color: #4a4a4a;
 }
 
 .prose-socrates code {
   font-size: 0.9em;
-  background: #f0faf9;
+  background: #fce9ec;
   color: #1a1a1a;
   padding: 0.15em 0.4em;
   border-radius: 4px;
@@ -118,13 +148,13 @@ code {
 }
 
 .prose-socrates a {
-  color: #5ba8a0;
+  color: #9a24b2;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .prose-socrates a:hover {
-  color: #4a9690;
+  color: #6f1c80;
 }
 
 .prose-socrates hr {

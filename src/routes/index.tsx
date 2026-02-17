@@ -113,13 +113,13 @@ function WebSearchPart({
   const results = output?.results ?? [];
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <Globe size={14} className="text-[#5BA8A0]" />
+        <Globe size={14} className="text-[#9a24b2]" />
         Web search ({results.length} results)
         <ChevronDown
           size={14}
@@ -127,7 +127,7 @@ function WebSearchPart({
         />
       </button>
       {open ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
           {results.map((r) => {
             const safeUrl = safeExternalUrl(r.url);
             return (
@@ -137,12 +137,12 @@ function WebSearchPart({
                     href={safeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-[#5BA8A0] hover:underline"
+                    className="font-medium text-[#9a24b2] hover:underline"
                   >
                     {r.title}
                   </a>
                 ) : (
-                  <span className="font-medium text-[#5BA8A0]">
+                  <span className="font-medium text-[#9a24b2]">
                     {r.title}
                   </span>
                 )}
@@ -173,8 +173,8 @@ function SaveInsightPart({
   }
 
   return (
-    <div className="my-2 flex items-start gap-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] px-3 py-2 text-[13px]">
-      <BookmarkCheck size={14} className="mt-0.5 text-[#5BA8A0] shrink-0" />
+    <div className="my-2 flex items-start gap-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] px-3 py-2 text-[13px]">
+      <BookmarkCheck size={14} className="mt-0.5 text-[#9a24b2] shrink-0" />
       <div>
         <span className="font-medium text-[#1a1a1a]">Insight saved</span>
         {output?.topic ? (
@@ -211,13 +211,13 @@ function DevilsAdvocatePart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <Swords size={14} className="text-[#5BA8A0]" />
+        <Swords size={14} className="text-[#9a24b2]" />
         Devil's Advocate
         <ChevronDown
           size={14}
@@ -225,7 +225,7 @@ function DevilsAdvocatePart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Your position: </span>
             {output.userPosition}
@@ -240,14 +240,14 @@ function DevilsAdvocatePart({
               <ul className="mt-1 space-y-1 text-[#1a1a1a]">
                 {output.keyEvidence.map((e) => (
                   <li key={e} className="flex gap-1.5 leading-snug">
-                    <span className="text-[#5BA8A0] shrink-0">&#8226;</span>
+                    <span className="text-[#9a24b2] shrink-0">&#8226;</span>
                     {e}
                   </li>
                 ))}
               </ul>
             </div>
           ) : null}
-          <p className="text-[#5BA8A0] font-medium italic leading-snug">
+          <p className="text-[#9a24b2] font-medium italic leading-snug">
             {output.challengeQuestion}
           </p>
         </div>
@@ -297,13 +297,13 @@ function FactCheckPart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <ShieldCheck size={14} className="text-[#5BA8A0]" />
+        <ShieldCheck size={14} className="text-[#9a24b2]" />
         Fact Check
         {output ? (
           <span className={`text-xs ${verdictColor[output.verdict]}`}>
@@ -316,7 +316,7 @@ function FactCheckPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Claim: </span>
             &ldquo;{output.claim}&rdquo;
@@ -385,13 +385,13 @@ function LogicalAnalysisPart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <Brain size={14} className="text-[#5BA8A0]" />
+        <Brain size={14} className="text-[#9a24b2]" />
         Logical Analysis
         {output ? (
           <span className="text-xs text-[#8b8b8b]">— {output.fallacy}</span>
@@ -402,7 +402,7 @@ function LogicalAnalysisPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Your reasoning: </span>
             &ldquo;{output.userReasoning}&rdquo;
@@ -415,7 +415,7 @@ function LogicalAnalysisPart({
             <span className="font-medium not-italic">Analogy: </span>
             {output.example}
           </p>
-          <p className="text-[#5BA8A0] leading-snug">
+          <p className="text-[#9a24b2] leading-snug">
             <span className="font-medium">Better framing: </span>
             {output.betterFraming}
           </p>
@@ -456,13 +456,13 @@ function PerspectiveShiftPart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <Users size={14} className="text-[#5BA8A0]" />
+        <Users size={14} className="text-[#9a24b2]" />
         Perspective Shift — {output?.perspectives.length ?? 0} viewpoints
         <ChevronDown
           size={14}
@@ -470,7 +470,7 @@ function PerspectiveShiftPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
           {output.perspectives.map((p) => (
             <div key={p.stakeholder}>
               <p className="font-medium text-[#1a1a1a]">{p.stakeholder}</p>
@@ -478,7 +478,7 @@ function PerspectiveShiftPart({
               <p className="text-[#8b8b8b] leading-snug">{p.reasoning}</p>
             </div>
           ))}
-          <p className="text-[#5BA8A0] font-medium italic leading-snug">
+          <p className="text-[#9a24b2] font-medium italic leading-snug">
             {output.blindSpotQuestion}
           </p>
         </div>
@@ -513,13 +513,13 @@ function ArgumentMapPart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <GitBranch size={14} className="text-[#5BA8A0]" />
+        <GitBranch size={14} className="text-[#9a24b2]" />
         Argument Map
         <ChevronDown
           size={14}
@@ -527,8 +527,8 @@ function ArgumentMapPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
-          <div className="rounded-lg bg-[#5BA8A0]/10 px-3 py-2">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
+          <div className="rounded-lg bg-[#9a24b2]/10 px-3 py-2">
             <span className="font-medium text-[#1a1a1a]">Claim: </span>
             <span className="text-[#1a1a1a]">{output.claim}</span>
           </div>
@@ -536,7 +536,7 @@ function ArgumentMapPart({
             <span className="font-medium text-[#1a1a1a]">Premises:</span>
             <div className="mt-1 space-y-2">
               {output.premises.map((p) => (
-                <div key={p.text} className="border-l-2 border-[#5BA8A0] pl-3">
+                <div key={p.text} className="border-l-2 border-[#9a24b2] pl-3">
                   <p className="text-[#1a1a1a] leading-snug">{p.text}</p>
                   {p.evidence.length > 0 ? (
                     <ul className="mt-1 space-y-0.5">
@@ -545,7 +545,7 @@ function ArgumentMapPart({
                           key={e}
                           className="flex gap-1.5 text-[#8b8b8b] leading-snug"
                         >
-                          <span className="text-[#5BA8A0] shrink-0">
+                          <span className="text-[#9a24b2] shrink-0">
                             &#8226;
                           </span>
                           {e}
@@ -559,25 +559,25 @@ function ArgumentMapPart({
           </div>
           <div>
             <span className="font-medium text-[#1a1a1a]">Conclusion: </span>
-            <span className="text-[#5BA8A0] font-medium">
+            <span className="text-[#9a24b2] font-medium">
               {output.conclusion}
             </span>
           </div>
           {output.counterarguments && output.counterarguments.length > 0 ? (
             <div>
-              <span className="font-medium text-[#F08B8B]">
+              <span className="font-medium text-[#ed3a5b]">
                 Counterarguments:
               </span>
               <div className="mt-1 space-y-2">
                 {output.counterarguments.map((ca) => (
                   <div
                     key={ca.point}
-                    className="border-l-2 border-[#F08B8B] pl-3"
+                    className="border-l-2 border-[#ed3a5b] pl-3"
                   >
                     <p className="text-[#1a1a1a] leading-snug">{ca.point}</p>
                     {ca.rebuttal ? (
                       <p className="text-[#8b8b8b] leading-snug mt-0.5">
-                        <span className="font-medium text-[#5BA8A0]">
+                        <span className="font-medium text-[#9a24b2]">
                           Rebuttal:{" "}
                         </span>
                         {ca.rebuttal}
@@ -639,13 +639,13 @@ function ReadingListPart({
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <BookOpen size={14} className="text-[#5BA8A0]" />
+        <BookOpen size={14} className="text-[#9a24b2]" />
         Reading List — {output?.topic}
         <ChevronDown
           size={14}
@@ -653,12 +653,12 @@ function ReadingListPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
           {output.recommendations.map((rec) => {
             const Icon = typeIcon[rec.type];
             return (
               <div key={rec.title} className="flex gap-2">
-                <Icon size={14} className="mt-0.5 text-[#5BA8A0] shrink-0" />
+                <Icon size={14} className="mt-0.5 text-[#9a24b2] shrink-0" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-[#1a1a1a]">
@@ -667,7 +667,7 @@ function ReadingListPart({
                     <span className="text-[#8b8b8b]">by {rec.author}</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
                       {rec.type}
                     </span>
                     <span
@@ -724,13 +724,13 @@ function DiscoverResourcesPart({
   const resources = output?.resources ?? [];
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
       >
-        <Newspaper size={14} className="text-[#5BA8A0]" />
+        <Newspaper size={14} className="text-[#9a24b2]" />
         Recent Resources — {output?.topic}
         <ChevronDown
           size={14}
@@ -738,8 +738,8 @@ function DiscoverResourcesPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-3">
-          <p className="text-[#5BA8A0] italic leading-snug">{output.reason}</p>
+        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
+          <p className="text-[#9a24b2] italic leading-snug">{output.reason}</p>
           {resources.map((r) => {
             let domain = "";
             try {
@@ -754,12 +754,12 @@ function DiscoverResourcesPart({
                     href={r.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-[#5BA8A0] hover:underline"
+                    className="font-medium text-[#9a24b2] hover:underline"
                   >
                     {r.title}
                   </a>
                   {domain ? (
-                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
                       {domain}
                     </span>
                   ) : null}
@@ -824,15 +824,15 @@ function RetrievalPracticePart({
 
   if (output.status === "question") {
     return (
-      <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px] px-3 py-3 space-y-2">
+      <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px] px-3 py-3 space-y-2">
         <div className="flex items-center gap-2">
-          <BrainCircuit size={14} className="text-[#5BA8A0]" />
+          <BrainCircuit size={14} className="text-[#9a24b2]" />
           <span className="font-medium text-[#1a1a1a]">Recall Challenge</span>
-          <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+          <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
             {output.topic}
           </span>
         </div>
-        <p className="text-[#5BA8A0] italic leading-snug">{output.question}</p>
+        <p className="text-[#9a24b2] italic leading-snug">{output.question}</p>
         {output.hint ? (
           <p className="text-[#8b8b8b] leading-snug text-[12px]">
             Hint: {output.hint}
@@ -847,11 +847,11 @@ function RetrievalPracticePart({
   if (!fb) return null;
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px] px-3 py-3 space-y-2">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px] px-3 py-3 space-y-2">
       <div className="flex items-center gap-2">
-        <BrainCircuit size={14} className="text-[#5BA8A0]" />
+        <BrainCircuit size={14} className="text-[#9a24b2]" />
         <span className="font-medium text-[#1a1a1a]">Recall Feedback</span>
-        <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#d4eeec] text-[#5BA8A0]">
+        <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
           {output.topic}
         </span>
         <span
@@ -895,7 +895,7 @@ function RetrievalPracticePart({
         </div>
       ) : null}
       <p className="text-[#1a1a1a] leading-snug">{fb.correctedExplanation}</p>
-      <p className="text-[#5BA8A0] font-medium italic leading-snug">
+      <p className="text-[#9a24b2] font-medium italic leading-snug">
         {fb.followUpQuestion}
       </p>
     </div>
@@ -939,9 +939,9 @@ function ProgressiveDisclosurePart({
   const { layers } = output;
 
   return (
-    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px] px-3 py-3 space-y-3">
+    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px] px-3 py-3 space-y-3">
       <div className="flex items-center gap-2">
-        <Layers size={14} className="text-[#5BA8A0]" />
+        <Layers size={14} className="text-[#9a24b2]" />
         <span className="font-medium text-[#1a1a1a]">{output.concept}</span>
       </div>
 
@@ -952,8 +952,8 @@ function ProgressiveDisclosurePart({
             key={layer.level}
             className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-medium ${
               layer.level <= revealedLevel
-                ? "bg-[#5BA8A0] text-white"
-                : "bg-[#d4eeec] text-[#8b8b8b]"
+                ? "bg-[#9a24b2] text-white"
+                : "bg-[#da9ee6] text-[#8b8b8b]"
             }`}
           >
             {layer.level}
@@ -967,7 +967,7 @@ function ProgressiveDisclosurePart({
         .map((layer) => (
           <div
             key={layer.level}
-            className="border-l-2 border-[#5BA8A0] pl-3 space-y-1"
+            className="border-l-2 border-[#9a24b2] pl-3 space-y-1"
           >
             <p className="font-medium text-[#1a1a1a]">
               Level {layer.level}: {layer.title}
@@ -978,7 +978,7 @@ function ProgressiveDisclosurePart({
                 {layer.analogy}
               </p>
             ) : null}
-            <p className="text-[#5BA8A0] italic leading-snug">
+            <p className="text-[#9a24b2] italic leading-snug">
               {layer.readinessQuestion}
             </p>
           </div>
@@ -989,7 +989,7 @@ function ProgressiveDisclosurePart({
         <button
           type="button"
           onClick={() => setRevealedLevel((l) => l + 1)}
-          className="flex items-center gap-1.5 rounded-lg border border-[#5BA8A0] px-3 py-1.5 text-[12px] font-medium text-[#5BA8A0] transition-colors hover:bg-[#5BA8A0] hover:text-white"
+          className="flex items-center gap-1.5 rounded-lg border border-[#9a24b2] px-3 py-1.5 text-[12px] font-medium text-[#9a24b2] transition-colors hover:bg-[#9a24b2] hover:text-white"
         >
           Go deeper
           <ChevronDown size={12} />
@@ -1070,7 +1070,7 @@ function Composer({
         data-testid="file-input"
       />
       <div
-        className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#5BA8A0] ${isDragging ? "border-[#5BA8A0] border-dashed border-2" : "border-[#d4eeec]"}`}
+        className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#9a24b2] ${isDragging ? "border-[#9a24b2] border-dashed border-2" : "border-[#da9ee6]"}`}
         style={{ boxShadow: composerShadow }}
       >
         {hasFiles ? (
@@ -1086,7 +1086,7 @@ function Composer({
                 <img
                   src={fileUrls[index] ?? ""}
                   alt={file.name}
-                  className="w-16 h-16 rounded-lg object-cover border border-[#d4eeec]"
+                  className="w-16 h-16 rounded-lg object-cover border border-[#da9ee6]"
                 />
                 <button
                   type="button"
@@ -1115,7 +1115,7 @@ function Composer({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#8b8b8b] transition-all hover:text-[#5BA8A0] hover:bg-[#f0faf9] disabled:opacity-50 disabled:hover:text-[#8b8b8b] disabled:hover:bg-transparent"
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#8b8b8b] transition-all hover:text-[#9a24b2] hover:bg-[#fce9ec] disabled:opacity-50 disabled:hover:text-[#8b8b8b] disabled:hover:bg-transparent"
             aria-label="Upload image"
           >
             <ImagePlus size={18} />
@@ -1125,7 +1125,7 @@ function Composer({
           <button
             type="submit"
             disabled={isLoading || (!input.trim() && !hasFiles)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#5BA8A0] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#d4eeec] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#9a24b2] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#da9ee6] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
           >
             <svg
               width="16"
@@ -1156,12 +1156,12 @@ const taglines = [
 ];
 
 const starterCardColors = [
-  { border: "#0055FF", bg: "#EBF0FF" }, // blue
-  { border: "#7B2FBE", bg: "#F0E8F8" }, // purple
-  { border: "#FF33CC", bg: "#FFF0F8" }, // magenta
-  { border: "#008888", bg: "#E8FFF5" }, // teal
-  { border: "#F87272", bg: "#FFF0F0" }, // coral
-  { border: "#00D4A0", bg: "#E8FFF8" }, // green
+  { border: "#9a24b2", bg: "#da9ee6" }, // berry
+  { border: "#ed3a5b", bg: "#fce9ec" }, // rose
+  { border: "#f36b00", bg: "#fff1e5" }, // orange
+  { border: "#1cc2ae", bg: "#a6ede4" }, // teal
+  { border: "#ba3cd4", bg: "#fce9ec" }, // berry-light
+  { border: "#d0173a", bg: "#f5b1bd" }, // rose-dark
 ];
 
 const starterCards = [
@@ -1280,9 +1280,13 @@ export function Chat() {
 
   // Load conversation when URL changes
   useEffect(() => {
-    if (urlConversationId) {
-      fetch(`/api/conversations/${urlConversationId}`, {
+    const controller = new AbortController();
+    const conversationId = urlConversationId;
+
+    if (conversationId) {
+      fetch(`/api/conversations/${conversationId}`, {
         headers: clientAuthHeaders,
+        signal: controller.signal,
       })
         .then((res) => {
           if (!res.ok) throw new Error("Not found");
@@ -1297,6 +1301,7 @@ export function Chat() {
               created_at: string;
             }[];
           }) => {
+            if (controller.signal.aborted) return;
             const msgs: UIMessage[] = data.messages.map((m) => ({
               id: m.id,
               role: m.role,
@@ -1305,10 +1310,11 @@ export function Chat() {
               createdAt: new Date(m.created_at),
             }));
             setInitialMessages(msgs);
-            setCurrentConversationId(urlConversationId);
+            setCurrentConversationId(conversationId);
           },
         )
         .catch(() => {
+          if (controller.signal.aborted) return;
           setInitialMessages([]);
           setCurrentConversationId(undefined);
         });
@@ -1316,6 +1322,8 @@ export function Chat() {
       setInitialMessages([]);
       setCurrentConversationId(undefined);
     }
+
+    return () => controller.abort();
   }, [urlConversationId]);
 
   const handleSelectConversation = useCallback(
@@ -1500,10 +1508,15 @@ function ChatView({
       const parts: unknown[] = [];
       if (text) parts.push({ type: "text", text });
 
-      // Save user message
+      // Save user message without blocking sendMessage
       if (cId && parts.length > 0) {
-        await saveMessageToDb(cId, "user", parts);
-        onMessageSaved();
+        void saveMessageToDb(cId, "user", parts)
+          .then(() => {
+            onMessageSaved();
+          })
+          .catch(() => {
+            // Ignore persistence errors
+          });
       }
 
       sendMessage(
@@ -1834,7 +1847,7 @@ function ChatView({
                 <select
                   value={selectedModelId}
                   onChange={(e) => onSelectedModelIdChange(e.target.value)}
-                  className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
+                  className="appearance-none rounded-lg border border-[#da9ee6] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#9a24b2] focus:outline-none cursor-pointer"
                 >
                   {models.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -1895,7 +1908,7 @@ function ChatView({
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="p-1.5 rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#f0faf9] transition-colors"
+          className="p-1.5 rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#fce9ec] transition-colors"
           aria-label="Toggle sidebar"
         >
           <Menu size={20} />
@@ -1918,7 +1931,7 @@ function ChatView({
             <select
               value={selectedModelId}
               onChange={(e) => onSelectedModelIdChange(e.target.value)}
-              className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
+              className="appearance-none rounded-lg border border-[#da9ee6] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#9a24b2] focus:outline-none cursor-pointer"
             >
               {models.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -1941,7 +1954,7 @@ function ChatView({
               {message.role === "user" ? (
                 <div className="flex justify-end">
                   <div
-                    className="max-w-[85%] rounded-2xl bg-[#5BA8A0] px-5 py-3 text-white"
+                    className="max-w-[85%] rounded-2xl bg-[#9a24b2] px-5 py-3 text-white"
                     style={{ boxShadow: composerShadow }}
                   >
                     {renderMessageParts(message)}
@@ -1968,9 +1981,9 @@ function ChatView({
                 className="w-8 h-8 rounded-full object-cover shrink-0 mt-1"
               />
               <div className="flex items-center gap-1.5 py-2">
-                <span className="w-2 h-2 rounded-full bg-[#5BA8A0] animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 rounded-full bg-[#F08B8B] animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 rounded-full bg-[#CCFFFF] animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#9a24b2] animate-bounce [animation-delay:0ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#ed3a5b] animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#1cc2ae] animate-bounce [animation-delay:300ms]" />
               </div>
             </div>
           ) : null}

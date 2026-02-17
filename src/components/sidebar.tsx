@@ -71,7 +71,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#f0faf9] transition-colors"
+            className="p-1 rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#fce9ec] transition-colors"
             aria-label="Close sidebar"
           >
             <X size={16} />
@@ -82,7 +82,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onNewConversation}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#5BA8A0] hover:bg-[#f0faf9] transition-colors"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#9a24b2] hover:bg-[#fce9ec] transition-colors"
           >
             <MessageSquarePlus size={16} />
             New conversation
@@ -146,7 +146,7 @@ function ConversationRow({
 }) {
   return (
     <div
-      className={`group flex items-center rounded-lg transition-colors ${isActive ? "bg-[#f0faf9] text-[#5BA8A0]" : "text-[#1a1a1a] hover:bg-[#fafafa]"}`}
+      className={`group flex items-center rounded-lg transition-colors ${isActive ? "bg-[#fce9ec] text-[#9a24b2]" : "text-[#1a1a1a] hover:bg-[#fafafa]"}`}
     >
       <button
         type="button"
