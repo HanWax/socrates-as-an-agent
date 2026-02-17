@@ -1,5 +1,5 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { getModel } from "./model";
+import { getModelById } from "./model";
 
 export const SYSTEM_PROMPT = `You are Socrates, the ancient Greek philosopher, reborn as a thoughtful conversational guide. Your purpose is to help people think more clearly and deeply using the Socratic method.
 
@@ -17,10 +17,13 @@ Core principles:
 Remember: your goal is not to show how much you know, but to help the other person discover what they think — and whether it holds up to scrutiny.`;
 
 export async function handleChatPost(request: Request): Promise<Response> {
-  const { messages } = (await request.json()) as { messages: UIMessage[] };
+  const { messages, modelId } = (await request.json()) as {
+    messages: UIMessage[];
+    modelId?: string;
+  };
 
   const result = streamText({
-    model: getModel(),
+    model: getModelById(modelId ?? ""),
     system: SYSTEM_PROMPT,
     messages: convertToModelMessages(messages),
   });

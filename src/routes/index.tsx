@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ImagePlus, X } from "lucide-react";
+import { ChevronDown, ImagePlus, X } from "lucide-react";
 import {
   type ChangeEvent,
   type DragEvent,
@@ -10,6 +10,12 @@ import {
   useRef,
   useState,
 } from "react";
+
+interface ModelOption {
+  id: string;
+  name: string;
+  provider: string;
+}
 
 export const Route = createFileRoute("/")({ component: Chat });
 
@@ -24,13 +30,27 @@ function removeFileAtIndex(files: FileList, index: number): FileList {
 }
 
 export function Chat() {
-  const { messages, sendMessage, status } = useChat();
+  const [models, setModels] = useState<ModelOption[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState("");
+
+  const { messages, sendMessage, status } = useChat({
+    body: { modelId: selectedModelId },
+  });
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<FileList | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/models")
+      .then((res) => res.json())
+      .then((data: ModelOption[]) => {
+        setModels(data);
+        if (data.length > 0) setSelectedModelId(data[0].id);
+      });
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -217,9 +237,28 @@ export function Chat() {
           <h1 className="text-2xl font-medium text-[#1a1a1a] mb-1">
             What would you like to examine?
           </h1>
-          <p className="text-sm text-[#8b8b8b] mb-8">
+          <p className="text-sm text-[#8b8b8b] mb-4">
             Socrates will question your assumptions.
           </p>
+          {models.length > 1 && (
+            <div className="relative mb-6">
+              <select
+                value={selectedModelId}
+                onChange={(e) => setSelectedModelId(e.target.value)}
+                className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
+              >
+                {models.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b8b8b]"
+              />
+            </div>
+          )}
           <form
             onSubmit={handleFormSubmit}
             onDragOver={handleDragOver}
@@ -280,12 +319,31 @@ export function Chat() {
       {/* Sticky Socrates header */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-3 bg-[#fafafa] border-b border-[#eae7e3]">
         <img src="/socrates.svg" alt="Socrates" className="w-10 h-10" />
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-base font-medium text-[#1a1a1a] leading-tight">
             Socrates
           </h1>
           <p className="text-xs text-[#8b8b8b]">Questioning your assumptions</p>
         </div>
+        {models.length > 1 && (
+          <div className="relative shrink-0">
+            <select
+              value={selectedModelId}
+              onChange={(e) => setSelectedModelId(e.target.value)}
+              className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
+            >
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b8b8b]"
+            />
+          </div>
+        )}
       </div>
 
       <main className="flex-1 overflow-y-auto">

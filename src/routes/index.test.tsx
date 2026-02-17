@@ -27,6 +27,24 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
+// Mock fetch for /api/models
+const originalFetch = globalThis.fetch;
+beforeEach(() => {
+  globalThis.fetch = vi.fn((input) => {
+    if (typeof input === "string" && input === "/api/models") {
+      return Promise.resolve(
+        new Response(JSON.stringify([]), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    return originalFetch(input);
+  }) as typeof fetch;
+});
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
+
 import { Chat } from "./index";
 
 // --- Helpers ---

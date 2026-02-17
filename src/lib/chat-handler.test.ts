@@ -8,12 +8,12 @@ vi.mock("ai", () => ({
     mockConvertToModelMessages(...args),
 }));
 vi.mock("./model", () => ({
-  getModel: vi.fn(() => ({ provider: "mock", model: "test-model" })),
+  getModelById: vi.fn(() => ({ provider: "mock", model: "test-model" })),
 }));
 
 import { streamText } from "ai";
 import { handleChatPost, SYSTEM_PROMPT } from "./chat-handler";
-import { getModel } from "./model";
+import { getModelById } from "./model";
 
 function createRequest(body: unknown): Request {
   return new Request("http://localhost:3000/api/chat", {
@@ -96,7 +96,7 @@ describe("handleChatPost", () => {
     );
   });
 
-  it("uses the model returned by getModel()", async () => {
+  it("uses the model returned by getModelById()", async () => {
     const mockResult = {
       toUIMessageStreamResponse: vi.fn(() => new Response()),
     };
@@ -107,12 +107,26 @@ describe("handleChatPost", () => {
     const request = createRequest({ messages: [] });
     await handleChatPost(request);
 
-    expect(getModel).toHaveBeenCalledOnce();
+    expect(getModelById).toHaveBeenCalledOnce();
     expect(streamText).toHaveBeenCalledWith(
       expect.objectContaining({
         model: { provider: "mock", model: "test-model" },
       }),
     );
+  });
+
+  it("passes modelId from request body to getModelById", async () => {
+    const mockResult = {
+      toUIMessageStreamResponse: vi.fn(() => new Response()),
+    };
+    vi.mocked(streamText).mockReturnValue(
+      mockResult as ReturnType<typeof streamText>,
+    );
+
+    const request = createRequest({ messages: [], modelId: "gpt-4o" });
+    await handleChatPost(request);
+
+    expect(getModelById).toHaveBeenCalledWith("gpt-4o");
   });
 
   it("rejects non-JSON request bodies", async () => {

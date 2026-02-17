@@ -7,45 +7,88 @@ vi.mock("@ai-sdk/openai", () => ({
   openai: vi.fn((model: string) => ({ provider: "openai", model })),
 }));
 
-import { getModel } from "./model";
+import { getAvailableModels, getModelById } from "./model";
 
-describe("getModel", () => {
-  const originalEnv = process.env.MODEL_PROVIDER;
+describe("getAvailableModels", () => {
+  const origAnthropic = process.env.ANTHROPIC_API_KEY;
+  const origOpenai = process.env.OPENAI_API_KEY;
 
   afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.MODEL_PROVIDER;
-    } else {
-      process.env.MODEL_PROVIDER = originalEnv;
-    }
+    if (origAnthropic === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = origAnthropic;
+    if (origOpenai === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = origOpenai;
   });
 
-  it("returns anthropic model by default when MODEL_PROVIDER is unset", () => {
-    delete process.env.MODEL_PROVIDER;
-    const model = getModel();
+  it("returns anthropic models when only ANTHROPIC_API_KEY is set", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    delete process.env.OPENAI_API_KEY;
+    const models = getAvailableModels();
+    expect(models.every((m) => m.provider === "anthropic")).toBe(true);
+    expect(models.length).toBe(2);
+  });
+
+  it("returns openai models when only OPENAI_API_KEY is set", () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.OPENAI_API_KEY = "sk-test";
+    const models = getAvailableModels();
+    expect(models.every((m) => m.provider === "openai")).toBe(true);
+    expect(models.length).toBe(2);
+  });
+
+  it("returns all models when both keys are set", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    process.env.OPENAI_API_KEY = "sk-test";
+    const models = getAvailableModels();
+    expect(models.length).toBe(4);
+  });
+
+  it("returns empty array when no keys are set", () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    const models = getAvailableModels();
+    expect(models.length).toBe(0);
+  });
+});
+
+describe("getModelById", () => {
+  const origAnthropic = process.env.ANTHROPIC_API_KEY;
+  const origOpenai = process.env.OPENAI_API_KEY;
+
+  afterEach(() => {
+    if (origAnthropic === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = origAnthropic;
+    if (origOpenai === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = origOpenai;
+  });
+
+  it("returns the correct anthropic model by id", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    const model = getModelById("claude-sonnet-4-5");
     expect(model).toEqual({
       provider: "anthropic",
       model: "claude-sonnet-4-5-20250929",
     });
   });
 
-  it('returns anthropic model when MODEL_PROVIDER is "anthropic"', () => {
-    process.env.MODEL_PROVIDER = "anthropic";
-    const model = getModel();
-    expect(model).toEqual({
-      provider: "anthropic",
-      model: "claude-sonnet-4-5-20250929",
-    });
-  });
-
-  it('returns openai model when MODEL_PROVIDER is "openai"', () => {
-    process.env.MODEL_PROVIDER = "openai";
-    const model = getModel();
+  it("returns the correct openai model by id", () => {
+    process.env.OPENAI_API_KEY = "sk-test";
+    const model = getModelById("gpt-4o");
     expect(model).toEqual({ provider: "openai", model: "gpt-4o" });
   });
 
-  it("throws an error for an unknown provider", () => {
-    process.env.MODEL_PROVIDER = "gemini";
-    expect(() => getModel()).toThrow("Unknown MODEL_PROVIDER: gemini");
+  it("falls back to first available model for invalid id", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    const model = getModelById("nonexistent");
+    expect(model).toEqual({
+      provider: "anthropic",
+      model: "claude-sonnet-4-5-20250929",
+    });
+  });
+
+  it("throws when no models are available", () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    expect(() => getModelById("anything")).toThrow("No model available");
   });
 });
