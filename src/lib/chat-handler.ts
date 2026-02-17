@@ -5,7 +5,9 @@ import {
   type UIMessage,
 } from "ai";
 import { checkCsrf, corsHeaders } from "./cors";
+import { checkApiAuth } from "./auth";
 import { logger } from "./logger";
+import { MAX_BODY_SIZE, validateMessages } from "./message-validation";
 import { getModelById, isValidModelId } from "./model";
 import { checkRateLimit, getClientIp } from "./rate-limit";
 import { tools } from "./tools";
@@ -75,18 +77,6 @@ Tools at your disposal:
 
 Remember: your goal is not to show how much you know, but to help the other person discover what they think — and whether it holds up to scrutiny. Whether they're examining a philosophical belief, a business plan, or their life's direction, the method is the same: ask the question that opens the door they haven't walked through yet.`;
 
-const MAX_BODY_SIZE = 5 * 1024 * 1024; // 5 MB
-const MAX_MESSAGE_COUNT = 100;
-const MAX_TEXT_LENGTH = 10_000;
-const MAX_FILES_PER_MESSAGE = 4;
-const MAX_FILE_DATA_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-]);
-
 function createErrorResponse(
   status: number,
   message: string,
@@ -99,94 +89,6 @@ function createErrorResponse(
       ...corsHeaders(origin ?? null),
     },
   });
-}
-
-function checkAuth(request: Request, ip: string): Response | null {
-  const apiKey = process.env.CHAT_API_KEY;
-  if (!apiKey) return null;
-
-  const auth = request.headers.get("authorization");
-  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-
-  if (!token || token !== apiKey) {
-    logger.warn("auth_failed", { ip });
-    return createErrorResponse(401, "Unauthorized");
-  }
-
-  return null;
-}
-
-interface MessagePart {
-  type: string;
-  text?: string;
-  mediaType?: string;
-  data?: string;
-}
-
-function validateMessages(
-  messages: unknown[],
-): { valid: true } | { valid: false; error: string } {
-  if (!Array.isArray(messages)) {
-    return { valid: false, error: "messages must be an array" };
-  }
-
-  if (messages.length > MAX_MESSAGE_COUNT) {
-    return {
-      valid: false,
-      error: `Too many messages (max ${MAX_MESSAGE_COUNT})`,
-    };
-  }
-
-  for (const msg of messages) {
-    if (typeof msg !== "object" || msg === null) continue;
-
-    const parts: MessagePart[] | undefined = (msg as { parts?: MessagePart[] })
-      .parts;
-    if (!Array.isArray(parts)) continue;
-
-    let fileCount = 0;
-
-    for (const part of parts) {
-      if (part.type === "text" && typeof part.text === "string") {
-        if (part.text.length > MAX_TEXT_LENGTH) {
-          return {
-            valid: false,
-            error: `Text too long (max ${MAX_TEXT_LENGTH} chars)`,
-          };
-        }
-      }
-
-      if (part.type === "file") {
-        fileCount++;
-
-        if (
-          typeof part.mediaType === "string" &&
-          !ALLOWED_IMAGE_TYPES.has(part.mediaType)
-        ) {
-          return {
-            valid: false,
-            error: `File type not allowed: ${part.mediaType}`,
-          };
-        }
-
-        if (
-          typeof part.data === "string" &&
-          part.data.length > MAX_FILE_DATA_SIZE
-        ) {
-          return { valid: false, error: "File data too large" };
-        }
-      }
-    }
-
-    if (fileCount > MAX_FILES_PER_MESSAGE) {
-      return {
-        valid: false,
-        error: `Too many files per message (max ${MAX_FILES_PER_MESSAGE})`,
-      };
-    }
-  }
-
-  return { valid: true };
 }
 
 export async function handleChatPost(request: Request): Promise<Response> {
@@ -212,8 +114,11 @@ export async function handleChatPost(request: Request): Promise<Response> {
   }
 
   // Auth
-  const authError = checkAuth(request, ip);
-  if (authError) return authError;
+  const authResult = checkApiAuth(request);
+  if (!authResult.ok) {
+    logger.warn("auth_failed", { ip, reason: authResult.reason });
+    return createErrorResponse(401, "Unauthorized", origin);
+  }
 
   // Body size check
   const contentLength = request.headers.get("content-length");

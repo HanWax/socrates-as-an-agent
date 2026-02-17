@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { checkApiAuth } from "../../../lib/auth";
 import { getDb } from "../../../lib/db";
+import { logger } from "../../../lib/logger";
+import {
+  MAX_BODY_SIZE,
+  validateMessageParts,
+} from "../../../lib/message-validation";
+import { getClientIp } from "../../../lib/rate-limit";
 
 export const Route = createFileRoute(
   "/api/conversations/$conversationId/messages",
@@ -8,6 +15,30 @@ export const Route = createFileRoute(
     handlers: {
       POST: async ({ request, params }) => {
         try {
+          const auth = checkApiAuth(request);
+          if (!auth.ok) {
+            logger.warn("auth_failed", {
+              ip: getClientIp(request),
+              reason: auth.reason,
+              route: "conversations_message_create",
+            });
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
+          const contentLength = request.headers.get("content-length");
+          if (
+            contentLength &&
+            Number.parseInt(contentLength, 10) > MAX_BODY_SIZE
+          ) {
+            return new Response(
+              JSON.stringify({ error: "Request body too large" }),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
           const { conversationId } = params;
           const body = (await request.json()) as {
             role: string;
@@ -25,6 +56,14 @@ export const Route = createFileRoute(
           if (role !== "user" && role !== "assistant") {
             return new Response(
               JSON.stringify({ error: "role must be 'user' or 'assistant'" }),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          const partsValidation = validateMessageParts(content);
+          if (!partsValidation.valid) {
+            return new Response(
+              JSON.stringify({ error: partsValidation.error }),
               { status: 400, headers: { "Content-Type": "application/json" } },
             );
           }

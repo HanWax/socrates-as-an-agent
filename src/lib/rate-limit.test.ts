@@ -7,21 +7,33 @@ beforeEach(() => {
 
 describe("getClientIp", () => {
   it("extracts first IP from x-forwarded-for", () => {
+    process.env.TRUST_PROXY = "true";
     const req = new Request("http://localhost", {
       headers: { "x-forwarded-for": "1.2.3.4, 5.6.7.8" },
     });
     expect(getClientIp(req)).toBe("1.2.3.4");
+    delete process.env.TRUST_PROXY;
   });
 
   it("falls back to x-real-ip", () => {
+    process.env.TRUST_PROXY = "true";
     const req = new Request("http://localhost", {
       headers: { "x-real-ip": "9.8.7.6" },
     });
     expect(getClientIp(req)).toBe("9.8.7.6");
+    delete process.env.TRUST_PROXY;
   });
 
   it("returns 'unknown' when no IP headers present", () => {
     const req = new Request("http://localhost");
+    expect(getClientIp(req)).toBe("unknown");
+  });
+
+  it("returns 'unknown' when proxy headers are untrusted", () => {
+    delete process.env.TRUST_PROXY;
+    const req = new Request("http://localhost", {
+      headers: { "x-forwarded-for": "1.2.3.4" },
+    });
     expect(getClientIp(req)).toBe("unknown");
   });
 });

@@ -100,6 +100,7 @@ describe("handleChatPost", () => {
     });
     vi.mocked(isValidModelId).mockReturnValue(true);
     delete process.env.CHAT_API_KEY;
+    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
   });
 
   it("calls streamText with system prompt, model, tools, and converted messages", async () => {
@@ -187,6 +188,7 @@ describe("rate limiting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.CHAT_API_KEY;
+    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
@@ -212,6 +214,7 @@ describe("authentication", () => {
       allowed: true,
       remaining: 19,
     });
+    delete process.env.ALLOW_UNAUTHENTICATED_CHAT;
   });
 
   it("returns 401 when CHAT_API_KEY is set but no token provided", async () => {
@@ -257,6 +260,7 @@ describe("authentication", () => {
 
   it("allows request when CHAT_API_KEY is not configured", async () => {
     delete process.env.CHAT_API_KEY;
+    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
     setupStreamTextMock();
 
     const request = createRequest({ messages: [] });
@@ -274,6 +278,7 @@ describe("request validation", () => {
       remaining: 19,
     });
     delete process.env.CHAT_API_KEY;
+    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
   });
 
   it("returns 400 when messages exceed max count", async () => {
@@ -365,6 +370,7 @@ describe("error handling", () => {
       remaining: 19,
     });
     delete process.env.CHAT_API_KEY;
+    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
   });
 
   it("returns 500 when streamText throws", async () => {

@@ -1,11 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { checkApiAuth } from "../../../lib/auth";
 import { getDb } from "../../../lib/db";
+import { logger } from "../../../lib/logger";
+import { getClientIp } from "../../../lib/rate-limit";
 
 export const Route = createFileRoute("/api/conversations/$conversationId")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
         try {
+          const auth = checkApiAuth(request);
+          if (!auth.ok) {
+            logger.warn("auth_failed", {
+              ip: getClientIp(request),
+              reason: auth.reason,
+              route: "conversations_get",
+            });
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
           const { conversationId } = params;
           const sql = getDb();
           const convRows = await sql`
@@ -40,8 +56,21 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
           });
         }
       },
-      DELETE: async ({ params }) => {
+      DELETE: async ({ params, request }) => {
         try {
+          const auth = checkApiAuth(request);
+          if (!auth.ok) {
+            logger.warn("auth_failed", {
+              ip: getClientIp(request),
+              reason: auth.reason,
+              route: "conversations_delete",
+            });
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
           const { conversationId } = params;
           const sql = getDb();
           const rows = await sql`

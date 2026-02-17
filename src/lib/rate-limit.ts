@@ -57,15 +57,21 @@ export function checkRateLimit(ip: string): {
   return { allowed: true, remaining: MAX_REQUESTS - entry.timestamps.length };
 }
 
-export function getClientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
+function shouldTrustProxy(): boolean {
+  return process.env.TRUST_PROXY === "true";
+}
 
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) {
-    return realIp.trim();
+export function getClientIp(request: Request): string {
+  if (shouldTrustProxy()) {
+    const forwarded = request.headers.get("x-forwarded-for");
+    if (forwarded) {
+      return forwarded.split(",")[0].trim();
+    }
+
+    const realIp = request.headers.get("x-real-ip");
+    if (realIp) {
+      return realIp.trim();
+    }
   }
 
   return "unknown";

@@ -74,6 +74,24 @@ interface SearchResult {
   snippet: string;
 }
 
+const clientApiKey =
+  (import.meta.env.VITE_CHAT_API_KEY as string | undefined) ?? undefined;
+const clientAuthHeaders = clientApiKey
+  ? { Authorization: `Bearer ${clientApiKey}` }
+  : {};
+
+function safeExternalUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.toString();
+    }
+  } catch {
+    // invalid URL
+  }
+  return null;
+}
+
 function WebSearchPart({
   state,
   output,
@@ -110,19 +128,28 @@ function WebSearchPart({
       </button>
       {open ? (
         <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
-          {results.map((r) => (
-            <div key={r.url}>
-              <a
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-[#5BA8A0] hover:underline"
-              >
-                {r.title}
-              </a>
-              <p className="text-[#8b8b8b] leading-snug">{r.snippet}</p>
-            </div>
-          ))}
+          {results.map((r) => {
+            const safeUrl = safeExternalUrl(r.url);
+            return (
+              <div key={`${r.url}-${r.title}`}>
+                {safeUrl ? (
+                  <a
+                    href={safeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[#5BA8A0] hover:underline"
+                  >
+                    {r.title}
+                  </a>
+                ) : (
+                  <span className="font-medium text-[#5BA8A0]">
+                    {r.title}
+                  </span>
+                )}
+                <p className="text-[#8b8b8b] leading-snug">{r.snippet}</p>
+              </div>
+            );
+          })}
         </div>
       ) : null}
     </div>
@@ -1190,7 +1217,7 @@ async function saveMessageToDb(
   try {
     const res = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...clientAuthHeaders },
       body: JSON.stringify({ role, content: parts }),
     });
     return res.ok;
@@ -1215,7 +1242,7 @@ export function Chat() {
   const [selectedModelId, setSelectedModelId] = useState("");
 
   const fetchConversationList = useCallback(() => {
-    fetch("/api/conversations")
+    fetch("/api/conversations", { headers: clientAuthHeaders })
       .then((res) => {
         if (!res.ok) return;
         return res.json();
@@ -1233,7 +1260,10 @@ export function Chat() {
   // Load models on mount
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/models", { signal: controller.signal })
+    fetch("/api/models", {
+      signal: controller.signal,
+      headers: clientAuthHeaders,
+    })
       .then((res) => res.json())
       .then((data: ModelOption[]) => {
         setModels(data);
@@ -1251,7 +1281,9 @@ export function Chat() {
   // Load conversation when URL changes
   useEffect(() => {
     if (urlConversationId) {
-      fetch(`/api/conversations/${urlConversationId}`)
+      fetch(`/api/conversations/${urlConversationId}`, {
+        headers: clientAuthHeaders,
+      })
         .then((res) => {
           if (!res.ok) throw new Error("Not found");
           return res.json();
@@ -1303,7 +1335,10 @@ export function Chat() {
 
   const handleDeleteConversation = useCallback(
     (id: string) => {
-      fetch(`/api/conversations/${id}`, { method: "DELETE" })
+      fetch(`/api/conversations/${id}`, {
+        method: "DELETE",
+        headers: clientAuthHeaders,
+      })
         .then((res) => {
           if (!res.ok) return;
           fetchConversationList();
@@ -1385,6 +1420,7 @@ function ChatView({
 
   const { messages, sendMessage, status } = useChat({
     messages: initialMessages,
+    headers: clientAuthHeaders,
     onFinish: async ({ message }) => {
       const cId = convIdRef.current;
       if (cId && message.role === "assistant") {
@@ -1448,7 +1484,7 @@ function ChatView({
         try {
           const res = await fetch("/api/conversations", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...clientAuthHeaders },
             body: JSON.stringify({}),
           });
           const conv = (await res.json()) as { id: string };
