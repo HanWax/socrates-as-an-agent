@@ -10,6 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ModelOption {
   id: string;
@@ -200,14 +202,27 @@ export function Chat() {
 
     for (const part of message.parts) {
       if (part.type === "text") {
-        elements.push(
-          <p
-            key={`text-${part.text.slice(0, 32)}`}
-            className="whitespace-pre-wrap text-[15px] leading-relaxed"
-          >
-            {part.text}
-          </p>,
-        );
+        if (message.role === "assistant") {
+          elements.push(
+            <div
+              key={`text-${part.text.slice(0, 32)}`}
+              className="prose-socrates text-[15px] leading-relaxed"
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {part.text}
+              </ReactMarkdown>
+            </div>,
+          );
+        } else {
+          elements.push(
+            <p
+              key={`text-${part.text.slice(0, 32)}`}
+              className="whitespace-pre-wrap text-[15px] leading-relaxed"
+            >
+              {part.text}
+            </p>,
+          );
+        }
       } else if (
         part.type === "file" &&
         typeof part.mediaType === "string" &&
