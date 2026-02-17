@@ -1,0 +1,143 @@
+<svg viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Line Art Face Sketch of Socrates -->
+  <!-- Minimal, continuous-line style with varying stroke weights -->
+
+  <!-- Head outline - flowing contour -->
+  <path d="M160 80 C140 85, 120 110, 115 140 C110 170, 112 190, 118 210"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M240 80 C260 85, 278 110, 282 140 C286 170, 284 190, 278 210"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Crown / top of head -->
+  <path d="M160 80 C165 60, 180 48, 200 45 C220 48, 235 60, 240 80"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Receding hairline wisps -->
+  <path d="M155 82 C148 65, 158 50, 172 48"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M245 82 C252 65, 242 50, 228 48"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M170 47 C180 38, 195 35, 200 35 C205 35, 220 38, 230 47"
+    stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+  <!-- Brow ridge - heavy, distinctive -->
+  <path d="M145 130 C155 120, 170 118, 190 122"
+    stroke="#2a2a2a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M210 122 C230 118, 245 120, 255 130"
+    stroke="#2a2a2a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Left eye - minimal line art -->
+  <path d="M155 140 C162 134, 175 134, 185 140"
+    stroke="#2a2a2a" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M155 140 C162 146, 175 146, 185 140"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <circle cx="170" cy="140" r="3" fill="#2a2a2a"/>
+
+  <!-- Right eye -->
+  <path d="M215 140 C222 134, 235 134, 245 140"
+    stroke="#2a2a2a" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M215 140 C222 146, 235 146, 245 140"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <circle cx="230" cy="140" r="3" fill="#2a2a2a"/>
+
+  <!-- Nose - strong, prominent Greek nose, single flowing line -->
+  <path d="M198 125 C196 135, 192 150, 188 165 C185 175, 182 182, 185 188 C188 192, 196 195, 200 194 C204 195, 212 192, 215 188"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Subtle nostril lines -->
+  <path d="M188 190 C190 192, 194 193, 196 191"
+    stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+  <path d="M204 191 C206 193, 210 192, 212 190"
+    stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+  <!-- Mouth area - slight, contemplative -->
+  <path d="M175 215 C185 210, 195 208, 200 208 C205 208, 215 210, 225 215"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Lower lip suggestion -->
+  <path d="M180 220 C190 225, 200 226, 210 225 C215 224, 220 220, 220 220"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+  <!-- Beard - flowing line art, the signature Socrates feature -->
+  <!-- Left beard contour -->
+  <path d="M118 210 C115 225, 112 245, 115 265 C118 285, 125 305, 138 325 C148 340, 162 355, 180 365"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Right beard contour -->
+  <path d="M278 210 C281 225, 284 245, 281 265 C278 285, 271 305, 258 325 C248 340, 234 355, 216 365"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Beard bottom -->
+  <path d="M180 365 C188 372, 196 376, 200 377 C204 376, 212 372, 220 365"
+    stroke="#2a2a2a" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Beard interior flow lines - wispy, sketchy -->
+  <path d="M140 230 C142 260, 148 290, 158 320 C165 340, 175 355, 188 368"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <path d="M160 225 C158 255, 160 285, 168 315 C174 335, 182 350, 195 370"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.35"/>
+  <path d="M200 225 C198 260, 197 295, 198 330 C199 350, 200 365, 200 377"
+    stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <path d="M240 225 C242 255, 240 285, 232 315 C226 335, 218 350, 205 370"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.35"/>
+  <path d="M256 230 C254 260, 248 290, 238 320 C231 340, 221 355, 210 368"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.4"/>
+
+  <!-- Beard wave details -->
+  <path d="M135 250 C145 248, 155 252, 148 260"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M255 255 C248 252, 240 256, 246 264"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M150 290 C160 286, 168 292, 160 298"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M245 292 C238 288, 230 294, 238 300"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+
+  <!-- Ear left -->
+  <path d="M118 135 C108 138, 104 150, 106 162 C108 172, 114 178, 118 175"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Ear right -->
+  <path d="M278 135 C288 138, 292 150, 290 162 C288 172, 282 178, 278 175"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Neck lines -->
+  <path d="M170 215 C165 230, 160 238, 155 240"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M230 215 C235 230, 240 238, 245 240"
+    stroke="#2a2a2a" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+  <!-- Forehead wrinkle lines - wisdom lines -->
+  <path d="M165 100 C180 97, 200 96, 220 97 C230 98, 235 100, 235 100"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.35"/>
+  <path d="M162 110 C178 106, 200 105, 222 106 C232 107, 238 110, 238 110"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+
+  <!-- Crow's feet / expression lines -->
+  <path d="M148 145 C142 142, 138 138, 135 133"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M252 145 C258 142, 262 138, 265 133"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.3"/>
+
+  <!-- Cheekbone suggestion -->
+  <path d="M130 185 C138 180, 150 178, 160 182"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.25"/>
+  <path d="M270 185 C262 180, 250 178, 240 182"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.25"/>
+
+  <!-- Shoulder hints - loose sketch lines -->
+  <path d="M118 210 C100 220, 75 240, 55 270"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M278 210 C296 220, 321 240, 341 270"
+    stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+  <!-- Toga/drape suggestion -->
+  <path d="M55 270 C65 285, 80 295, 100 300"
+    stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.35"/>
+  <path d="M341 270 C331 285, 316 295, 296 300"
+    stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.35"/>
+  <path d="M80 260 C100 270, 130 278, 155 275"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.25"/>
+  <path d="M316 260 C296 270, 266 278, 241 275"
+    stroke="#2a2a2a" stroke-width="0.8" stroke-linecap="round" fill="none" opacity="0.25"/>
+</svg>
