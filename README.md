@@ -1,8 +1,117 @@
-# Socrates
+# Soundboard as a Service
 
-A Socratic method chatbot that challenges your thinking through probing questions. Built with TanStack Start, the Vercel AI SDK, and streaming LLM responses.
+A Socratic method chatbot that challenges your thinking through probing questions — never giving direct answers, only helping you discover what you think and whether it holds up to scrutiny.
 
-![Socrates chatbot](public/socrates.svg)
+Built with TanStack Start, the Vercel AI SDK, and streaming LLM responses.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Browser                                                            │
+│                                                                     │
+│  ┌──────────────┐    ┌──────────────────────────────────────────┐   │
+│  │   Sidebar     │    │  Chat UI (src/routes/index.tsx)          │   │
+│  │              │    │                                          │   │
+│  │  Conversation │    │  ┌────────────────┐ ┌────────────────┐  │   │
+│  │  history      │    │  │ Message Stream  │ │ Tool Renderers │  │   │
+│  │  (grouped by  │    │  │ (Markdown +     │ │ (12 components)│  │   │
+│  │   time)       │    │  │  streaming)     │ │                │  │   │
+│  │              │    │  └────────────────┘ └────────────────┘  │   │
+│  │              │    │  ┌────────────────────────────────────┐  │   │
+│  │              │    │  │ Composer (text + image upload)      │  │   │
+│  │              │    │  └────────────────────────────────────┘  │   │
+│  └──────────────┘    └──────────────────────────────────────────┘   │
+│         │                         │ useChat (POST /api/chat)        │
+└─────────┼─────────────────────────┼─────────────────────────────────┘
+          │                         │
+          │ REST                    │ Streaming
+          ▼                         ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Server (Nitro)                                                     │
+│                                                                     │
+│  ┌──────────────────────┐    ┌──────────────────────────────────┐   │
+│  │ /api/conversations   │    │ /api/chat                        │   │
+│  │  GET  - list          │    │  CSRF check → Rate limit → Auth  │   │
+│  │  POST - create        │    │  → Input validation              │   │
+│  │                      │    │  → streamText() with tools        │   │
+│  │ /api/conversations/  │    │  → streaming response             │   │
+│  │   :id                │    │                                   │   │
+│  │  GET  - load          │    │ /api/models                      │   │
+│  │  DELETE               │    │  GET - available models           │   │
+│  │  /messages POST       │    │                                   │   │
+│  └──────────┬───────────┘    └──────────────┬───────────────────┘   │
+│             │                               │                       │
+│             ▼                               ▼                       │
+│  ┌──────────────────┐         ┌──────────────────────────────────┐  │
+│  │  Neon PostgreSQL  │         │  LLM Provider                    │  │
+│  │  (conversations,  │         │  Anthropic (Claude Sonnet 4.5)   │  │
+│  │   messages,       │         │  or OpenAI (GPT-4o)              │  │
+│  │   insights)       │         │                                  │  │
+│  └──────────────────┘         │  + Tavily (web search)            │  │
+│                               └──────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Features
+
+### Socratic Dialogue Engine
+
+- **Never gives direct answers** — only asks probing questions that guide you toward your own insights
+- **Three interconnected roles:**
+  - **Philosophical guide** — examines beliefs, arguments, and reasoning
+  - **Business idea soundboard** — stress-tests entrepreneurial ideas, unit economics, competitive moats
+  - **Moral ambition coach** — excavates genuine values and pushes toward specificity and commitment
+- **Teaching through testing** — uses retrieval practice after 3-4 exchanges to test understanding
+- **Progressive explanation** — layers concepts from simple to nuanced, checking readiness at each level
+
+### AI-Powered Tools (12 tools)
+
+| Tool | What it does |
+|------|-------------|
+| **Web Search** | Searches the web via Tavily for real-world evidence and counterexamples |
+| **Save Insight** | Persists breakthrough moments to the database |
+| **Devil's Advocate** | Builds the strongest possible counterargument to your position |
+| **Fact Check** | Evaluates factual claims with verdict (Supported / Partial / Unsupported / Unverifiable) |
+| **Logical Analysis** | Identifies logical fallacies and cognitive biases with analogies and better framings |
+| **Perspective Shift** | Surfaces 3-4 stakeholder viewpoints and asks about your blind spot |
+| **Argument Map** | Visualizes logical structure: claim, premises, evidence, conclusion, counterarguments |
+| **Suggest Reading** | Curated book/article/paper/video recommendations with difficulty levels |
+| **Discover Resources** | Finds recently published content (articles, podcasts, essays) via Tavily |
+| **Draw Diagram** | Renders Mermaid diagrams (flowchart/sequence/class) via Excalidraw |
+| **Retrieval Practice** | Structured recall challenges with assessment and corrected explanations |
+| **Progressive Disclosure** | Multi-layered explanations from simple to complex with "go deeper" interaction |
+
+### Chat Experience
+
+- **Streaming responses** — token-by-token rendering in real time
+- **Rich tool renderers** — each tool has a dedicated, collapsible UI component
+- **Image upload** — drag-and-drop or click, up to 4 images (JPEG, PNG, GIF, WebP), 5 MB each
+- **Conversation persistence** — chat history saved to Neon PostgreSQL
+- **Sidebar** — browse and manage previous conversations, grouped by "Today" / "Earlier"
+- **URL-based routing** — shareable conversation links via `?c=conversationId`
+- **Model selector** — switch between available models at runtime
+- **Starter cards** — 6 curated prompts to begin a conversation
+- **Keyboard shortcuts** — Cmd/Ctrl+Enter to submit
+
+### Multi-Model Support
+
+| Model | Provider |
+|-------|----------|
+| Claude Sonnet 4.5 | Anthropic |
+| Claude Haiku 3.5 | Anthropic |
+| GPT-4o | OpenAI |
+| GPT-4o Mini | OpenAI |
+
+Models are filtered by which API keys are configured — only available models appear in the selector.
+
+### Security
+
+- **CORS/CSRF protection** — origin validation with configurable allowlist
+- **Rate limiting** — sliding window, 20 requests/min per IP (in-memory)
+- **Bearer token auth** — optional `CHAT_API_KEY` for API access control
+- **Input validation** — max 100 messages, 10K chars/text, 4 files/message, 5 MB/file
+- **Request size limit** — 5 MB max body
 
 ## Prerequisites
 
@@ -61,25 +170,39 @@ The app will be running at **http://localhost:3000**.
 ```
 src/
 ├── routes/
-│   ├── index.tsx          # Chat UI (main page)
-│   ├── api/chat.ts        # POST /api/chat streaming endpoint
-│   └── __root.tsx         # Root layout
+│   ├── index.tsx                        # Chat UI (main page + 12 tool renderers)
+│   ├── __root.tsx                       # Root layout
+│   └── api/
+│       ├── chat.ts                      # POST /api/chat — streaming endpoint
+│       ├── models.ts                    # GET /api/models — available models
+│       └── conversations/
+│           ├── index.ts                 # GET/POST /api/conversations
+│           ├── $conversationId.ts       # GET/DELETE /api/conversations/:id
+│           └── $conversationId.messages.ts  # POST messages
 ├── lib/
-│   ├── chat-handler.ts    # Socratic system prompt + streamText logic
-│   └── model.ts           # Model provider selection (Anthropic / OpenAI)
-├── components/            # Shared React components
-├── styles.css             # Global styles (Tailwind CSS v4)
-└── router.tsx             # TanStack Router config
+│   ├── chat-handler.ts                  # Socratic system prompt + streamText logic
+│   ├── tools.ts                         # AI tool definitions (12 tools)
+│   ├── model.ts                         # Model provider selection
+│   ├── db.ts                            # Neon PostgreSQL connection
+│   ├── cors.ts                          # CORS & CSRF protection
+│   ├── rate-limit.ts                    # Sliding window rate limiter
+│   └── logger.ts                        # Structured JSON logging
+├── components/
+│   ├── sidebar.tsx                      # Conversation history sidebar
+│   ├── DiagramPart.tsx                  # Mermaid → Excalidraw diagram renderer
+│   └── SocratesSketch.tsx               # Hand-drawn Socrates SVG illustration
+├── styles.css                           # Global styles (Tailwind CSS v4)
+└── router.tsx                           # TanStack Router config
 ```
 
 ## How It Works
 
 1. The user types a message in the chat UI (`src/routes/index.tsx`).
 2. `useChat` from `@ai-sdk/react` sends a POST request to `/api/chat`.
-3. The API route (`src/routes/api/chat.ts`) calls `streamText` from the Vercel AI SDK with a Socratic method system prompt.
-4. The response streams back token-by-token and renders in real time.
-
-The system prompt instructs the model to never give direct answers — only ask probing questions that help the user examine their own thinking.
+3. The API route validates the request (CSRF, rate limit, auth, input size), then calls `streamText` from the Vercel AI SDK with the Socratic system prompt and 12 tools.
+4. The model responds with a mix of text and tool calls, streamed token-by-token.
+5. Each tool call is rendered by a dedicated UI component (collapsible cards with structured data).
+6. Conversations and messages are persisted to Neon PostgreSQL for history.
 
 ## Switching LLM Providers
 
@@ -164,19 +287,27 @@ docker run -p 3000:3000 \
 
 ## Environment Variables Reference
 
-| Variable            | Required | Default      | Description                          |
-| ------------------- | -------- | ------------ | ------------------------------------ |
-| `MODEL_PROVIDER`    | No       | `anthropic`  | `"anthropic"` or `"openai"`          |
-| `ANTHROPIC_API_KEY` | Yes*     | —            | Your Anthropic API key               |
-| `OPENAI_API_KEY`    | Yes*     | —            | Your OpenAI API key                  |
+| Variable            | Required | Default      | Description                                               |
+| ------------------- | -------- | ------------ | --------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | Yes*     | —            | Your Anthropic API key                                    |
+| `OPENAI_API_KEY`    | Yes*     | —            | Your OpenAI API key                                       |
+| `MODEL_PROVIDER`    | No       | `anthropic`  | `"anthropic"` or `"openai"`                               |
+| `DATABASE_URL`      | No       | —            | Neon PostgreSQL connection string (for conversation persistence) |
+| `TAVILY_API_KEY`    | No       | —            | Tavily API key (for web search and resource discovery tools) |
+| `CHAT_API_KEY`      | No       | —            | Bearer token for `/api/chat` authentication               |
+| `ALLOWED_ORIGIN`    | No       | —            | Comma-separated CORS allowlist (e.g. `https://yourdomain.com`) |
 
-*Only the key for your chosen provider is required.
+\*Only the key for your chosen provider is required.
 
 ## Tech Stack
 
-- **Framework:** [TanStack Start](https://tanstack.com/start) (React + Vite + Nitro)
-- **AI:** [Vercel AI SDK](https://sdk.vercel.ai/) with streaming
+- **Framework:** [TanStack Start](https://tanstack.com/start) (React 19 + Vite + Nitro)
+- **AI:** [Vercel AI SDK](https://sdk.vercel.ai/) with streaming and tool use
+- **Models:** Anthropic Claude + OpenAI GPT via provider SDKs
+- **Database:** [Neon](https://neon.tech/) serverless PostgreSQL
+- **Diagrams:** [Excalidraw](https://excalidraw.com/) + Mermaid-to-Excalidraw converter
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
 - **Linting:** [Biome](https://biomejs.dev/)
 - **Testing:** [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/)
 

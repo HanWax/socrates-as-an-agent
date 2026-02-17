@@ -31,10 +31,11 @@ export const Route = createFileRoute(
 
           const sql = getDb();
 
-          // Save the message
+          // Save the message (content is passed as-is; the column should be JSONB)
+          const contentJson = JSON.stringify(content);
           const msgRows = await sql`
             INSERT INTO messages (conversation_id, role, content)
-            VALUES (${conversationId}, ${role}, ${JSON.stringify(content)})
+            VALUES (${conversationId}, ${role}, ${contentJson}::jsonb)
             RETURNING id, role, content, created_at
           `;
 

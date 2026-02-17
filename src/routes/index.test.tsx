@@ -302,6 +302,7 @@ describe("Chat", () => {
       await waitFor(() => {
         expect(mockSendMessage).toHaveBeenCalledWith(
           expect.objectContaining({ text: "What is virtue?" }),
+          expect.objectContaining({ body: expect.any(Object) }),
         );
       });
     });
@@ -319,6 +320,7 @@ describe("Chat", () => {
       await waitFor(() => {
         expect(mockSendMessage).toHaveBeenCalledWith(
           expect.objectContaining({ text: "What is virtue?" }),
+          expect.objectContaining({ body: expect.any(Object) }),
         );
       });
     });

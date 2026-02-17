@@ -3,12 +3,30 @@
 
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 20;
+const MAX_STORE_SIZE = 10_000;
+const CLEANUP_INTERVAL_MS = 5 * 60_000;
 
 interface BucketEntry {
   timestamps: number[];
 }
 
 const store = new Map<string, BucketEntry>();
+
+let lastCleanup = Date.now();
+
+/** Remove entries with no timestamps in the current window. */
+function pruneStaleEntries(now: number) {
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS && store.size < MAX_STORE_SIZE) {
+    return;
+  }
+  lastCleanup = now;
+  const cutoff = now - WINDOW_MS;
+  for (const [ip, entry] of store) {
+    if (entry.timestamps.every((t) => t <= cutoff)) {
+      store.delete(ip);
+    }
+  }
+}
 
 export function checkRateLimit(ip: string): {
   allowed: boolean;
@@ -17,6 +35,8 @@ export function checkRateLimit(ip: string): {
 } {
   const now = Date.now();
   const cutoff = now - WINDOW_MS;
+
+  pruneStaleEntries(now);
 
   let entry = store.get(ip);
   if (!entry) {

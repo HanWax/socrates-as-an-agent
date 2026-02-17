@@ -2,6 +2,8 @@ import { tool } from "ai";
 import { z } from "zod";
 import { getDb } from "./db";
 
+const TOOL_TIMEOUT_MS = 15_000;
+
 export const tools = {
   webSearch: tool({
     description:
@@ -24,6 +26,7 @@ export const tools = {
           max_results: 5,
           include_answer: false,
         }),
+        signal: AbortSignal.timeout(TOOL_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -143,6 +146,7 @@ export const tools = {
           days: 14,
           include_answer: false,
         }),
+        signal: AbortSignal.timeout(TOOL_TIMEOUT_MS),
       });
 
       if (!response.ok) {

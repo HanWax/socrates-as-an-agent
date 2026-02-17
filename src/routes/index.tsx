@@ -5,12 +5,14 @@ import {
   BookmarkCheck,
   BookOpen,
   Brain,
+  BrainCircuit,
   ChevronDown,
   FileText,
   GitBranch,
   Globe,
   GraduationCap,
   ImagePlus,
+  Layers,
   Menu,
   Newspaper,
   ShieldCheck,
@@ -1126,6 +1128,15 @@ const taglines = [
   "Want someone to challenge your thinking?",
 ];
 
+const starterCardColors = [
+  { border: "#0055FF", bg: "#EBF0FF" }, // blue
+  { border: "#7B2FBE", bg: "#F0E8F8" }, // purple
+  { border: "#FF33CC", bg: "#FFF0F8" }, // magenta
+  { border: "#008888", bg: "#E8FFF5" }, // teal
+  { border: "#F87272", bg: "#FFF0F0" }, // coral
+  { border: "#00D4A0", bg: "#E8FFF8" }, // green
+];
+
 const starterCards = [
   {
     title: "Challenge my beliefs",
@@ -1175,12 +1186,17 @@ async function saveMessageToDb(
   conversationId: string,
   role: "user" | "assistant",
   parts: unknown,
-) {
-  await fetch(`/api/conversations/${conversationId}/messages`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role, content: parts }),
-  });
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role, content: parts }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export function Chat() {
@@ -1200,11 +1216,18 @@ export function Chat() {
 
   const fetchConversationList = useCallback(() => {
     fetch("/api/conversations")
-      .then((res) => res.json())
-      .then((data: { conversations: ConversationListItem[] }) => {
-        setConversationList(data.conversations);
+      .then((res) => {
+        if (!res.ok) return;
+        return res.json();
       })
-      .catch(() => {});
+      .then((data: { conversations: ConversationListItem[] } | undefined) => {
+        if (data?.conversations) {
+          setConversationList(data.conversations);
+        }
+      })
+      .catch(() => {
+        // Database unavailable — leave list as-is
+      });
   }, []);
 
   // Load models on mount
@@ -1275,17 +1298,22 @@ export function Chat() {
     setSidebarOpen(false);
     setInitialMessages([]);
     setCurrentConversationId(undefined);
-    navigate({ search: {} });
+    navigate({ search: { c: undefined } });
   }, [navigate]);
 
   const handleDeleteConversation = useCallback(
     (id: string) => {
-      fetch(`/api/conversations/${id}`, { method: "DELETE" }).then(() => {
-        fetchConversationList();
-        if (id === currentConversationId) {
-          handleNewConversation();
-        }
-      });
+      fetch(`/api/conversations/${id}`, { method: "DELETE" })
+        .then((res) => {
+          if (!res.ok) return;
+          fetchConversationList();
+          if (id === currentConversationId) {
+            handleNewConversation();
+          }
+        })
+        .catch(() => {
+          // Delete failed — leave list as-is
+        });
     },
     [currentConversationId, fetchConversationList, handleNewConversation],
   );
@@ -1356,9 +1384,8 @@ function ChatView({
   const convIdRef = useRef(conversationId);
 
   const { messages, sendMessage, status } = useChat({
-    initialMessages,
-    body: { modelId: selectedModelId },
-    onFinish: async (message) => {
+    messages: initialMessages,
+    onFinish: async ({ message }) => {
       const cId = convIdRef.current;
       if (cId && message.role === "assistant") {
         await saveMessageToDb(cId, "assistant", message.parts);
@@ -1439,10 +1466,14 @@ function ChatView({
 
       // Save user message
       if (cId && parts.length > 0) {
-        saveMessageToDb(cId, "user", parts).then(() => onMessageSaved());
+        await saveMessageToDb(cId, "user", parts);
+        onMessageSaved();
       }
 
-      sendMessage({ text, files: textOverride ? undefined : files });
+      sendMessage(
+        { text, files: textOverride ? undefined : files },
+        { body: { modelId: selectedModelId } },
+      );
       if (!textOverride) {
         setFiles(undefined);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1455,6 +1486,7 @@ function ChatView({
       input,
       isLoading,
       sendMessage,
+      selectedModelId,
       files,
       hasFiles,
       onConversationCreated,
@@ -1751,59 +1783,69 @@ function ChatView({
   if (!hasMessages) {
     return (
       <div className="flex flex-col h-screen bg-[#fafafa]">
-        <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-8">
-          <img
-            src="/socrates.svg"
-            alt="Soundboard as a Service"
-            className="w-80 h-auto mb-4"
-          />
-          <h1 className="text-2xl font-medium text-[#1a1a1a] mb-1">
-            {taglines[taglineIndex]}
-          </h1>
-          {models.length > 1 ? (
-            <div className="relative mt-3 mb-6">
-              <select
-                value={selectedModelId}
-                onChange={(e) => onSelectedModelIdChange(e.target.value)}
-                className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
-              >
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={14}
-                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b8b8b]"
-              />
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col items-center px-4 py-12 min-h-full justify-center">
+            <img
+              src="/socrates.svg"
+              alt="Soundboard as a Service"
+              className="w-80 h-auto mb-4"
+            />
+            <h1 className="text-2xl font-medium text-[#1a1a1a] mb-1">
+              {taglines[taglineIndex]}
+            </h1>
+            {models.length > 1 ? (
+              <div className="relative mt-3 mb-6">
+                <select
+                  value={selectedModelId}
+                  onChange={(e) => onSelectedModelIdChange(e.target.value)}
+                  className="appearance-none rounded-lg border border-[#d4eeec] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#5BA8A0] focus:outline-none cursor-pointer"
+                >
+                  {models.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b8b8b]"
+                />
+              </div>
+            ) : null}
+            <div className="grid grid-cols-2 gap-3 w-full max-w-2xl mb-6 mt-2">
+              {starterCards.map((card, index) => {
+                const colors =
+                  starterCardColors[index % starterCardColors.length];
+                return (
+                  <button
+                    key={card.title}
+                    type="button"
+                    onClick={() => submit(card.prompt)}
+                    disabled={isLoading}
+                    className="text-left rounded-xl border-l-4 px-4 py-3 transition-all hover:shadow-md disabled:opacity-50"
+                    style={{
+                      borderLeftColor: colors.border,
+                      backgroundColor: colors.bg,
+                    }}
+                  >
+                    <p className="font-medium text-[14px] text-[#1a1a1a]">
+                      {card.title}
+                    </p>
+                    <p className="text-[13px] text-[#8b8b8b] mt-0.5">
+                      {card.subtitle}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-2xl mb-6 mt-2">
-            {starterCards.map((card) => (
-              <button
-                key={card.title}
-                type="button"
-                onClick={() => submit(card.prompt)}
-                disabled={isLoading}
-                className="text-left rounded-xl border border-[#d4eeec] bg-white px-4 py-3 transition-all hover:border-[#5BA8A0] hover:shadow-sm disabled:opacity-50"
-              >
-                <p className="font-medium text-[14px] text-[#1a1a1a]">
-                  {card.title}
-                </p>
-                <p className="text-[13px] text-[#8b8b8b] mt-0.5">
-                  {card.subtitle}
-                </p>
-              </button>
-            ))}
+            <Composer
+              {...composerProps}
+              formClassName="w-full max-w-2xl"
+              placeholder="Share a thought or belief..."
+              rows={3}
+              textareaPadding="pt-4 pb-14"
+            />
           </div>
-          <Composer
-            {...composerProps}
-            formClassName="w-full max-w-2xl"
-            placeholder="Share a thought or belief..."
-            rows={3}
-            textareaPadding="pt-4 pb-14"
-          />
         </div>
       </div>
     );
