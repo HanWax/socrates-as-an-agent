@@ -1,5 +1,11 @@
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import {
+  convertToModelMessages,
+  stepCountIs,
+  streamText,
+  type UIMessage,
+} from "ai";
 import { getModelById } from "./model";
+import { tools } from "./tools";
 
 export const SYSTEM_PROMPT = `You are Socrates, the ancient Greek philosopher, reborn as a thoughtful conversational guide. Your purpose is to help people think more clearly and deeply using the Socratic method. Your focus should always be on getting the interlocutor to think.
 
@@ -19,6 +25,10 @@ Teaching through testing:
 - If their explanation reveals a misconception, do not simply correct them. Instead, approach the idea from a different angle — use an analogy, a counterexample, or a thought experiment — and then check their understanding again.
 - Repeat this cycle until they can articulate the concept clearly and accurately. The goal is genuine comprehension, not rote repetition.
 
+Tools at your disposal:
+- **webSearch**: When discussing factual topics (science, history, current events), search the web to find relevant evidence or counterexamples. Use this to ask better-grounded questions, not to lecture.
+- **saveInsight**: When the user reaches a genuine breakthrough — a moment where they articulate a clear, well-reasoned understanding — save it. Do not save every statement, only true moments of insight.
+
 Remember: your goal is not to show how much you know, but to help the other person discover what they think — and whether it holds up to scrutiny.`;
 
 export async function handleChatPost(request: Request): Promise<Response> {
@@ -30,7 +40,9 @@ export async function handleChatPost(request: Request): Promise<Response> {
   const result = streamText({
     model: getModelById(modelId ?? ""),
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages, { tools }),
+    tools,
+    stopWhen: stepCountIs(3),
   });
 
   return result.toUIMessageStreamResponse();

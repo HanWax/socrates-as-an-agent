@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, ImagePlus, X } from "lucide-react";
+import { BookmarkCheck, ChevronDown, Globe, ImagePlus, X } from "lucide-react";
 import {
   type ChangeEvent,
   type DragEvent,
@@ -22,6 +22,96 @@ interface ModelOption {
 export const Route = createFileRoute("/")({ component: Chat });
 
 const composerShadow = "10px 10px 18px rgba(166, 180, 200, 0.4)";
+
+interface SearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
+function WebSearchPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: { results: SearchResult[]; error?: string };
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <Globe size={14} className="animate-spin" />
+        Searching the web...
+      </div>
+    );
+  }
+
+  const results = output?.results ?? [];
+
+  return (
+    <div className="my-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] text-[13px]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+      >
+        <Globe size={14} className="text-[#5BA8A0]" />
+        Web search ({results.length} results)
+        <ChevronDown
+          size={14}
+          className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="border-t border-[#d4eeec] px-3 py-2 space-y-2">
+          {results.map((r) => (
+            <div key={r.url}>
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[#5BA8A0] hover:underline"
+              >
+                {r.title}
+              </a>
+              <p className="text-[#8b8b8b] leading-snug">{r.snippet}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SaveInsightPart({
+  state,
+  output,
+}: {
+  state: string;
+  output?: { saved: boolean; insight: string; topic: string | null };
+}) {
+  if (state !== "output-available") {
+    return (
+      <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
+        <BookmarkCheck size={14} className="animate-pulse" />
+        Saving insight...
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 flex items-start gap-2 rounded-xl border border-[#d4eeec] bg-[#f0faf9] px-3 py-2 text-[13px]">
+      <BookmarkCheck size={14} className="mt-0.5 text-[#5BA8A0] shrink-0" />
+      <div>
+        <span className="font-medium text-[#1a1a1a]">Insight saved</span>
+        {output?.topic && (
+          <span className="text-[#8b8b8b]"> in {output.topic}</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function removeFileAtIndex(files: FileList, index: number): FileList {
   const dt = new DataTransfer();
@@ -231,6 +321,37 @@ export function Chat() {
         part.mediaType.startsWith("image/")
       ) {
         imageFiles.push({ filename: part.filename });
+      } else if (part.type === "tool-webSearch") {
+        elements.push(
+          <WebSearchPart
+            key={`ws-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as {
+                    results: SearchResult[];
+                    error?: string;
+                  })
+                : undefined
+            }
+          />,
+        );
+      } else if (part.type === "tool-saveInsight") {
+        elements.push(
+          <SaveInsightPart
+            key={`si-${part.toolCallId}`}
+            state={part.state}
+            output={
+              part.state === "output-available"
+                ? (part.output as {
+                    saved: boolean;
+                    insight: string;
+                    topic: string | null;
+                  })
+                : undefined
+            }
+          />,
+        );
       }
     }
 

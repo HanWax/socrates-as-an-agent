@@ -1,19 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockConvertToModelMessages = vi.fn((msgs: unknown) => msgs);
+const mockConvertToModelMessages = vi.fn((msgs: unknown) =>
+  Promise.resolve(msgs),
+);
 
 vi.mock("ai", () => ({
   streamText: vi.fn(),
+  stepCountIs: vi.fn((n: number) => `stepCountIs(${n})`),
   convertToModelMessages: (...args: unknown[]) =>
     mockConvertToModelMessages(...args),
 }));
 vi.mock("./model", () => ({
   getModelById: vi.fn(() => ({ provider: "mock", model: "test-model" })),
 }));
+vi.mock("./tools", () => ({
+  tools: { webSearch: { mock: true }, saveInsight: { mock: true } },
+}));
 
 import { streamText } from "ai";
 import { handleChatPost, SYSTEM_PROMPT } from "./chat-handler";
 import { getModelById } from "./model";
+import { tools } from "./tools";
 
 function createRequest(body: unknown): Request {
   return new Request("http://localhost:3000/api/chat", {
@@ -41,6 +48,11 @@ describe("SYSTEM_PROMPT", () => {
   it("instructs how to handle images", () => {
     expect(SYSTEM_PROMPT).toContain("image");
   });
+
+  it("describes available tools", () => {
+    expect(SYSTEM_PROMPT).toContain("webSearch");
+    expect(SYSTEM_PROMPT).toContain("saveInsight");
+  });
 });
 
 describe("handleChatPost", () => {
@@ -48,7 +60,7 @@ describe("handleChatPost", () => {
     vi.clearAllMocks();
   });
 
-  it("calls streamText with system prompt, model, and converted messages", async () => {
+  it("calls streamText with system prompt, model, tools, and converted messages", async () => {
     const mockResponse = new Response("streamed", { status: 200 });
     const mockResult = {
       toUIMessageStreamResponse: vi.fn(() => mockResponse),
@@ -62,13 +74,18 @@ describe("handleChatPost", () => {
 
     const response = await handleChatPost(request);
 
-    expect(mockConvertToModelMessages).toHaveBeenCalledWith(messages);
-    expect(streamText).toHaveBeenCalledOnce();
-    expect(streamText).toHaveBeenCalledWith({
-      model: { provider: "mock", model: "test-model" },
-      system: SYSTEM_PROMPT,
-      messages,
+    expect(mockConvertToModelMessages).toHaveBeenCalledWith(messages, {
+      tools,
     });
+    expect(streamText).toHaveBeenCalledOnce();
+    expect(streamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: { provider: "mock", model: "test-model" },
+        system: SYSTEM_PROMPT,
+        messages,
+        tools,
+      }),
+    );
     expect(mockResult.toUIMessageStreamResponse).toHaveBeenCalledOnce();
     expect(response).toBe(mockResponse);
   });
@@ -90,7 +107,9 @@ describe("handleChatPost", () => {
 
     await handleChatPost(request);
 
-    expect(mockConvertToModelMessages).toHaveBeenCalledWith(messages);
+    expect(mockConvertToModelMessages).toHaveBeenCalledWith(messages, {
+      tools,
+    });
     expect(streamText).toHaveBeenCalledWith(
       expect.objectContaining({ messages }),
     );
