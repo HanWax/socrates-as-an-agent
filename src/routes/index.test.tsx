@@ -146,9 +146,9 @@ describe("Chat", () => {
       expect(heading.textContent).toBeTruthy();
     });
 
-    it("renders the Socrates logo", () => {
+    it("renders the logo", () => {
       render(<Chat />);
-      const img = screen.getByAltText("Socrates");
+      const img = screen.getByAltText("Soundboard as a Service");
       expect(img).toBeDefined();
       expect(img.getAttribute("src")).toBe("/socrates.svg");
     });
@@ -217,7 +217,7 @@ describe("Chat", () => {
       expect(screen.getByText("What do you mean by justice?")).toBeDefined();
     });
 
-    it("renders Socrates avatar next to assistant messages", () => {
+    it("renders avatar next to assistant messages", () => {
       useChatDefaults({
         messages: [
           makeMessage("1", "user", "Hello"),

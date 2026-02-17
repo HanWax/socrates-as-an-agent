@@ -5,12 +5,14 @@ import {
   BookmarkCheck,
   BookOpen,
   Brain,
+  BrainCircuit,
   ChevronDown,
   FileText,
   GitBranch,
   Globe,
   GraduationCap,
   ImagePlus,
+  Layers,
   Menu,
   Newspaper,
   ShieldCheck,
@@ -1505,7 +1507,7 @@ function ChatView({
         <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-8">
           <img
             src="/socrates.svg"
-            alt="Socrates"
+            alt="Soundboard as a Service"
             className="w-80 h-auto mb-4"
           />
           <h1 className="text-2xl font-medium text-[#1a1a1a] mb-1">
@@ -1573,12 +1575,18 @@ function ChatView({
         >
           <Menu size={20} />
         </button>
-        <img src="/socrates.svg" alt="Socrates" className="w-10 h-10" />
+        <img
+          src="/socrates.svg"
+          alt="Soundboard as a Service"
+          className="w-10 h-10"
+        />
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-medium text-[#1a1a1a] leading-tight">
             Soundboard as a Service
           </h1>
-          <p className="text-xs text-[#8b8b8b]">Just when they told you that SaaS was dead</p>
+          <p className="text-xs text-[#8b8b8b]">
+            Just when they told you that SaaS was dead
+          </p>
         </div>
         {models.length > 1 ? (
           <div className="relative shrink-0">
