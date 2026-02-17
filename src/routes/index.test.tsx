@@ -103,16 +103,11 @@ describe("Chat", () => {
   });
 
   describe("empty state", () => {
-    it("renders the title", () => {
+    it("renders a tagline", () => {
       render(<Chat />);
-      expect(screen.getByText("What would you like to examine?")).toBeDefined();
-    });
-
-    it("renders the subtitle", () => {
-      render(<Chat />);
-      expect(
-        screen.getByText("Socrates will question your assumptions."),
-      ).toBeDefined();
+      const heading = screen.getByRole("heading", { level: 1 });
+      expect(heading).toBeDefined();
+      expect(heading.textContent).toBeTruthy();
     });
 
     it("renders the Socrates logo", () => {

@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiModelsRouteImport } from './routes/api/models'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiConversationsIndexRouteImport } from './routes/api/conversations/index'
+import { Route as ApiConversationsConversationIdRouteImport } from './routes/api/conversations/$conversationId'
+import { Route as ApiConversationsConversationIdMessagesRouteImport } from './routes/api/conversations/$conversationId.messages'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +31,82 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConversationsIndexRoute = ApiConversationsIndexRouteImport.update({
+  id: '/api/conversations/',
+  path: '/api/conversations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConversationsConversationIdRoute =
+  ApiConversationsConversationIdRouteImport.update({
+    id: '/api/conversations/$conversationId',
+    path: '/api/conversations/$conversationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiConversationsConversationIdMessagesRoute =
+  ApiConversationsConversationIdMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => ApiConversationsConversationIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
   '/api/models': typeof ApiModelsRoute
+  '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
+  '/api/conversations/': typeof ApiConversationsIndexRoute
+  '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
   '/api/models': typeof ApiModelsRoute
+  '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
+  '/api/conversations': typeof ApiConversationsIndexRoute
+  '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
   '/api/models': typeof ApiModelsRoute
+  '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
+  '/api/conversations/': typeof ApiConversationsIndexRoute
+  '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat' | '/api/models'
+  fullPaths:
+    | '/'
+    | '/api/chat'
+    | '/api/models'
+    | '/api/conversations/$conversationId'
+    | '/api/conversations/'
+    | '/api/conversations/$conversationId/messages'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat' | '/api/models'
-  id: '__root__' | '/' | '/api/chat' | '/api/models'
+  to:
+    | '/'
+    | '/api/chat'
+    | '/api/models'
+    | '/api/conversations/$conversationId'
+    | '/api/conversations'
+    | '/api/conversations/$conversationId/messages'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/chat'
+    | '/api/models'
+    | '/api/conversations/$conversationId'
+    | '/api/conversations/'
+    | '/api/conversations/$conversationId/messages'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiModelsRoute: typeof ApiModelsRoute
+  ApiConversationsConversationIdRoute: typeof ApiConversationsConversationIdRouteWithChildren
+  ApiConversationsIndexRoute: typeof ApiConversationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,13 +132,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/conversations/': {
+      id: '/api/conversations/'
+      path: '/api/conversations'
+      fullPath: '/api/conversations/'
+      preLoaderRoute: typeof ApiConversationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conversations/$conversationId': {
+      id: '/api/conversations/$conversationId'
+      path: '/api/conversations/$conversationId'
+      fullPath: '/api/conversations/$conversationId'
+      preLoaderRoute: typeof ApiConversationsConversationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conversations/$conversationId/messages': {
+      id: '/api/conversations/$conversationId/messages'
+      path: '/messages'
+      fullPath: '/api/conversations/$conversationId/messages'
+      preLoaderRoute: typeof ApiConversationsConversationIdMessagesRouteImport
+      parentRoute: typeof ApiConversationsConversationIdRoute
+    }
   }
 }
+
+interface ApiConversationsConversationIdRouteChildren {
+  ApiConversationsConversationIdMessagesRoute: typeof ApiConversationsConversationIdMessagesRoute
+}
+
+const ApiConversationsConversationIdRouteChildren: ApiConversationsConversationIdRouteChildren =
+  {
+    ApiConversationsConversationIdMessagesRoute:
+      ApiConversationsConversationIdMessagesRoute,
+  }
+
+const ApiConversationsConversationIdRouteWithChildren =
+  ApiConversationsConversationIdRoute._addFileChildren(
+    ApiConversationsConversationIdRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiChatRoute: ApiChatRoute,
   ApiModelsRoute: ApiModelsRoute,
+  ApiConversationsConversationIdRoute:
+    ApiConversationsConversationIdRouteWithChildren,
+  ApiConversationsIndexRoute: ApiConversationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

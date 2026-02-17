@@ -36,7 +36,8 @@ describe("isOriginAllowed", () => {
 
   describe("when ALLOWED_ORIGIN is set", () => {
     beforeEach(() => {
-      process.env.ALLOWED_ORIGIN = "https://example.com,https://staging.example.com";
+      process.env.ALLOWED_ORIGIN =
+        "https://example.com,https://staging.example.com";
       _resetOrigins();
     });
 
@@ -97,7 +98,9 @@ describe("corsHeaders", () => {
       expect(headers["Access-Control-Allow-Origin"]).toBe("https://myapp.com");
       expect(headers["Access-Control-Allow-Methods"]).toBe("POST, OPTIONS");
       expect(headers["Access-Control-Allow-Headers"]).toContain("Content-Type");
-      expect(headers["Access-Control-Allow-Headers"]).toContain("Authorization");
+      expect(headers["Access-Control-Allow-Headers"]).toContain(
+        "Authorization",
+      );
       expect(headers["Access-Control-Max-Age"]).toBe("86400");
       expect(headers.Vary).toBe("Origin");
     });
@@ -124,8 +127,8 @@ describe("checkCsrf", () => {
     it("blocks cross-origin request", async () => {
       const result = checkCsrf(makeRequest("https://evil.com"));
       expect(result).not.toBeNull();
-      expect(result!.status).toBe(403);
-      const body = await result!.json();
+      expect(result?.status).toBe(403);
+      const body = await result?.json();
       expect(body.error).toMatch(/origin not allowed/);
     });
   });
@@ -144,13 +147,13 @@ describe("checkCsrf", () => {
     it("blocks a disallowed origin", async () => {
       const result = checkCsrf(makeRequest("https://evil.com"));
       expect(result).not.toBeNull();
-      expect(result!.status).toBe(403);
+      expect(result?.status).toBe(403);
     });
 
     it("blocks requests with no Origin header", async () => {
       const result = checkCsrf(makeRequest());
       expect(result).not.toBeNull();
-      expect(result!.status).toBe(403);
+      expect(result?.status).toBe(403);
     });
   });
 });

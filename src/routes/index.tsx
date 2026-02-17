@@ -1,5 +1,7 @@
 import { useChat } from "@ai-sdk/react";
-import { createFileRoute } from "@tanstack/react-router";
+import type { UIMessage } from "ai";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Sidebar } from "../components/sidebar";
 import {
   BookmarkCheck,
   BookOpen,
@@ -10,6 +12,7 @@ import {
   Globe,
   GraduationCap,
   ImagePlus,
+  Menu,
   Newspaper,
   ShieldCheck,
   Swords,
@@ -53,7 +56,12 @@ function filterValidFiles(fileList: File[]): File[] {
     .slice(0, MAX_FILE_COUNT);
 }
 
-export const Route = createFileRoute("/")({ component: Chat });
+export const Route = createFileRoute("/")({
+  component: Chat,
+  validateSearch: (search: Record<string, unknown>) => ({
+    c: typeof search.c === "string" ? search.c : undefined,
+  }),
+});
 
 const composerShadow = "10px 10px 18px rgba(166, 180, 200, 0.4)";
 
@@ -497,8 +505,8 @@ function ArgumentMapPart({
           <div>
             <span className="font-medium text-[#1a1a1a]">Premises:</span>
             <div className="mt-1 space-y-2">
-              {output.premises.map((p, i) => (
-                <div key={i} className="border-l-2 border-[#5BA8A0] pl-3">
+              {output.premises.map((p) => (
+                <div key={p.text} className="border-l-2 border-[#5BA8A0] pl-3">
                   <p className="text-[#1a1a1a] leading-snug">{p.text}</p>
                   {p.evidence.length > 0 ? (
                     <ul className="mt-1 space-y-0.5">
@@ -531,8 +539,11 @@ function ArgumentMapPart({
                 Counterarguments:
               </span>
               <div className="mt-1 space-y-2">
-                {output.counterarguments.map((ca, i) => (
-                  <div key={i} className="border-l-2 border-[#F08B8B] pl-3">
+                {output.counterarguments.map((ca) => (
+                  <div
+                    key={ca.point}
+                    className="border-l-2 border-[#F08B8B] pl-3"
+                  >
                     <p className="text-[#1a1a1a] leading-snug">{ca.point}</p>
                     {ca.rebuttal ? (
                       <p className="text-[#8b8b8b] leading-snug mt-0.5">
