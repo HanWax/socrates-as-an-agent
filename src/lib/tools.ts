@@ -140,7 +140,7 @@ export const tools = {
           api_key: apiKey,
           query,
           max_results: 5,
-          days: 7,
+          days: 14,
           include_answer: false,
         }),
       });
