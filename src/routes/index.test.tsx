@@ -67,13 +67,20 @@ function makeImageMessage(
   role: "user" | "assistant",
   text: string,
   mediaType = "image/png",
+  filename?: string,
 ) {
   return {
     id,
     role,
     parts: [
       { type: "text" as const, text },
-      { type: "file" as const, mediaType, data: "iVBOR" },
+      {
+        type: "file" as const,
+        mediaType,
+        data: "iVBOR",
+        url: "data:image/png;base64,iVBOR",
+        ...(filename && { filename }),
+      },
     ],
   };
 }
@@ -222,26 +229,31 @@ describe("Chat", () => {
       expect(screen.getByPlaceholderText("Reply...")).toBeDefined();
     });
 
-    it("renders image parts in user messages", () => {
+    it("renders image attachment summary in user messages", () => {
       useChatDefaults({
-        messages: [makeImageMessage("1", "user", "Look at this")],
+        messages: [
+          makeImageMessage(
+            "1",
+            "user",
+            "Look at this",
+            "image/png",
+            "photo.png",
+          ),
+        ],
       });
-      const { container } = render(<Chat />);
-      const images = container.querySelectorAll('img[alt="Uploaded content"]');
-      expect(images.length).toBe(1);
-      expect(images[0].getAttribute("src")).toContain("data:image/png;base64,");
+      render(<Chat />);
+      expect(screen.getByText("1 image attached (photo.png)")).toBeDefined();
     });
 
-    it("renders image parts in assistant messages", () => {
+    it("renders image attachment summary in assistant messages", () => {
       useChatDefaults({
         messages: [
           makeMessage("1", "user", "Hello"),
           makeImageMessage("2", "assistant", "Here is an image"),
         ],
       });
-      const { container } = render(<Chat />);
-      const images = container.querySelectorAll('img[alt="Uploaded content"]');
-      expect(images.length).toBe(1);
+      render(<Chat />);
+      expect(screen.getByText("1 image attached")).toBeDefined();
     });
   });
 

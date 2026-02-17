@@ -195,33 +195,45 @@ export function Chat() {
   );
 
   const renderMessageParts = (message: (typeof messages)[number]) => {
-    return message.parts.map((part) => {
+    const elements: React.ReactNode[] = [];
+    const imageFiles: { filename?: string }[] = [];
+
+    for (const part of message.parts) {
       if (part.type === "text") {
-        return (
+        elements.push(
           <p
             key={`text-${part.text.slice(0, 32)}`}
             className="whitespace-pre-wrap text-[15px] leading-relaxed"
           >
             {part.text}
-          </p>
+          </p>,
         );
-      }
-      if (
+      } else if (
         part.type === "file" &&
         typeof part.mediaType === "string" &&
         part.mediaType.startsWith("image/")
       ) {
-        return (
-          <img
-            key={`file-${part.mediaType}-${String(part.data).slice(0, 16)}`}
-            src={`data:${part.mediaType};base64,${part.data}`}
-            alt="Uploaded content"
-            className="max-w-full rounded-lg mt-2 mb-1"
-          />
-        );
+        imageFiles.push({ filename: part.filename });
       }
-      return null;
-    });
+    }
+
+    if (imageFiles.length > 0) {
+      const count = imageFiles.length;
+      const label = `${count} ${count === 1 ? "image" : "images"} attached`;
+      const names = imageFiles
+        .map((f) => f.filename)
+        .filter(Boolean)
+        .join(", ");
+
+      elements.push(
+        <p key="image-summary" className="text-[13px] italic opacity-80 mt-1">
+          {label}
+          {names && ` (${names})`}
+        </p>,
+      );
+    }
+
+    return elements;
   };
 
   // Empty state
