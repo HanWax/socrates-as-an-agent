@@ -1210,50 +1210,36 @@ const taglines = [
 ];
 
 const starterCardColors = [
-  { border: "#D62828", bg: "#F5E1E1" }, // vermillion red
-  { border: "#1D3557", bg: "#D8E2F0" }, // cobalt blue
   { border: "#F4D35E", bg: "#FDF6E0" }, // cadmium yellow
-  { border: "#2D6A4F", bg: "#D8EDE4" }, // emerald green
-  { border: "#1A1A1A", bg: "#E8E3DA" }, // ink black
+  { border: "#1D3557", bg: "#D8E2F0" }, // cobalt blue
   { border: "#D62828", bg: "#F5E1E1" }, // vermillion red
+  { border: "#2D6A4F", bg: "#D8EDE4" }, // emerald green
 ];
 
 const starterCards = [
   {
-    title: "Challenge my beliefs",
-    subtitle: "Pick a belief and I'll question every assumption",
+    title: "Surprise me",
+    subtitle: "Let Socrates pick a fascinating topic and teach you about it",
     prompt:
-      "I want you to challenge my beliefs. Pick a belief I might hold and question every assumption behind it.",
+      "Pick a topic you think is fascinating and worth understanding deeply — something I probably haven't thought much about. Then teach me about it using the Socratic method.",
   },
   {
-    title: "Stress-test my startup idea",
-    subtitle: "I'll find every weakness before your competitors do",
+    title: "Career consultant",
+    subtitle: "Think through your next career move with rigorous questioning",
     prompt:
-      "I have a startup idea I'd like you to stress-test. Help me find every weakness before my competitors do.",
+      "I'd like you to be my career consultant. Help me think through my career direction by asking me the hard questions I might be avoiding.",
   },
   {
-    title: "Explore an ethical dilemma",
-    subtitle: "No easy answers, just better questions",
+    title: "Values-based debate",
+    subtitle: "Work through a moral or ethical question together",
     prompt:
-      "I want to explore an ethical dilemma with you. Give me a challenging one with no easy answers.",
+      "I want to think through a values-based debate. Help me examine a moral or ethical question by challenging my reasoning and exposing my assumptions.",
   },
   {
-    title: "Find my life's direction",
-    subtitle: "What should you actually be doing with your time?",
+    title: "Preparation helper",
+    subtitle: "Get ready for a talk, lecture, interview, or presentation",
     prompt:
-      "Help me think about what I should actually be doing with my life. I want to find my direction.",
-  },
-  {
-    title: "Do we have free will?",
-    subtitle: "Or is everything predetermined?",
-    prompt:
-      "Do we have free will, or is everything predetermined? I want to explore this question deeply.",
-  },
-  {
-    title: "Debate a hot take",
-    subtitle: "I'll build the strongest case against your position",
-    prompt:
-      "I have a hot take I want to debate. I'll share my position and you build the strongest case against it.",
+      "I need help preparing for something — a talk, lecture, interview, or presentation. Ask me probing questions to sharpen my thinking and help me anticipate tough questions.",
   },
 ];
 
