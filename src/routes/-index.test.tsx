@@ -45,9 +45,26 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-// jsdom doesn't implement scrollIntoView
+// jsdom doesn't implement scrollIntoView or a full Storage interface
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
+  Element.prototype.scrollTo = vi.fn();
+
+  const store = new Map<string, string>();
+  Object.defineProperty(globalThis, "localStorage", {
+    value: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, val: string) => store.set(key, val),
+      removeItem: (key: string) => store.delete(key),
+      clear: () => store.clear(),
+      get length() {
+        return store.size;
+      },
+      key: (i: number) => [...store.keys()][i] ?? null,
+    },
+    writable: true,
+    configurable: true,
+  });
 });
 
 // Mock fetch for /api/models
