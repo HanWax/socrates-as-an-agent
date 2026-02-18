@@ -1278,6 +1278,9 @@ export function Chat() {
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
   >(urlConversationId);
+  const [chatViewKey, setChatViewKey] = useState<string>(
+    urlConversationId ?? "new",
+  );
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState("");
@@ -1324,6 +1327,12 @@ export function Chat() {
     const controller = new AbortController();
     const conversationId = urlConversationId;
 
+    // Skip fetch when conversation was just created inline (starter cards / first message)
+    if (conversationId && createdInlineRef.current === conversationId) {
+      createdInlineRef.current = null;
+      return;
+    }
+
     if (conversationId) {
       fetch(`/api/conversations/${conversationId}`, {
         signal: controller.signal,
@@ -1351,16 +1360,19 @@ export function Chat() {
             }));
             setInitialMessages(msgs);
             setCurrentConversationId(conversationId);
+            setChatViewKey(conversationId);
           },
         )
         .catch(() => {
           if (controller.signal.aborted) return;
           setInitialMessages([]);
           setCurrentConversationId(undefined);
+          setChatViewKey("new");
         });
     } else {
       setInitialMessages([]);
       setCurrentConversationId(undefined);
+      setChatViewKey("new");
     }
 
     return () => controller.abort();
@@ -1378,6 +1390,7 @@ export function Chat() {
     setSidebarOpen(false);
     setInitialMessages([]);
     setCurrentConversationId(undefined);
+    setChatViewKey("new");
     navigate({ search: { c: undefined } });
   }, [navigate]);
 
@@ -1400,8 +1413,11 @@ export function Chat() {
     [currentConversationId, fetchConversationList, handleNewConversation],
   );
 
+  const createdInlineRef = useRef<string | null>(null);
+
   const handleConversationCreated = useCallback(
     (id: string) => {
+      createdInlineRef.current = id;
       setCurrentConversationId(id);
       navigate({ search: { c: id } });
     },
@@ -1441,7 +1457,7 @@ export function Chat() {
         onDeleteConversation={handleDeleteConversation}
       />
       <ChatView
-        key={currentConversationId ?? "new"}
+        key={chatViewKey}
         initialMessages={initialMessages}
         conversationId={currentConversationId}
         models={models}
@@ -1508,6 +1524,7 @@ function ChatView({
     return localStorage.getItem("enterToSend") === "true";
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1526,7 +1543,13 @@ function ChatView({
 
   useEffect(() => {
     if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const container = scrollContainerRef.current;
+      if (container) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
+      }
     }
   }, [messages]);
 
@@ -2077,7 +2100,7 @@ function ChatView({
         </div>
       </div>
 
-      <main id="main-content" className="relative flex-1 overflow-y-auto">
+      <main ref={scrollContainerRef} id="main-content" className="relative flex-1 overflow-y-auto">
         <div
           className="mx-auto max-w-2xl px-4 py-8 space-y-6"
           role="log"
