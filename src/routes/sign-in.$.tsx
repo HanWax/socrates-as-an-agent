@@ -36,8 +36,14 @@ function SignInPage() {
           alt="Socrates as a Service"
           width={160}
           height={200}
-          className="mb-6 h-auto w-28 sm:w-40"
+          className="mb-4 h-auto w-28 sm:w-40"
         />
+        <h1 className="mb-1 text-xl font-medium text-[#1a1a1a] sm:text-2xl">
+          Welcome to Socrates
+        </h1>
+        <p className="mb-6 text-center text-sm text-[#8b8b8b]">
+          The chatbot that won't let you off easy.
+        </p>
         <div className="w-full rounded-[26px] border border-[#D4CFC6] bg-white/92 p-8 shadow-[0_26px_80px_rgba(26,26,26,0.10)] backdrop-blur">
           <SignIn />
         </div>
