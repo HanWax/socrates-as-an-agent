@@ -77,7 +77,39 @@ export function getClientIp(request: Request): string {
   return "unknown";
 }
 
+// ── Per-user rate limiter for authenticated endpoints ────────────────
+const AUTH_WINDOW_MS = 60_000;
+const AUTH_MAX_REQUESTS = 60;
+const authStore = new Map<string, BucketEntry>();
+
+export function checkAuthRateLimit(userId: string): {
+  allowed: boolean;
+  remaining: number;
+} {
+  const now = Date.now();
+  const cutoff = now - AUTH_WINDOW_MS;
+
+  let entry = authStore.get(userId);
+  if (!entry) {
+    entry = { timestamps: [] };
+    authStore.set(userId, entry);
+  }
+
+  entry.timestamps = entry.timestamps.filter((t) => t > cutoff);
+
+  if (entry.timestamps.length >= AUTH_MAX_REQUESTS) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  entry.timestamps.push(now);
+  return {
+    allowed: true,
+    remaining: AUTH_MAX_REQUESTS - entry.timestamps.length,
+  };
+}
+
 /** Reset the store — for test isolation only. */
 export function _resetStore() {
   store.clear();
+  authStore.clear();
 }

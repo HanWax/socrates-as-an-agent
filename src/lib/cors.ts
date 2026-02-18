@@ -35,10 +35,10 @@ export function corsHeaders(origin: string | null): Record<string, string> {
   // Resolve the value for Access-Control-Allow-Origin.
   let allowOrigin: string;
   if (allowed.size === 0) {
-    // No env var set — restrict to same-origin (no ACAO header means the
-    // browser will block cross-origin reads, but we still set it explicitly
-    // so responses are unambiguous).
-    allowOrigin = origin ?? "";
+    // No env var set — same-origin only. Return no CORS headers so the
+    // browser blocks cross-origin reads. Same-origin requests do not need
+    // CORS headers.
+    allowOrigin = "";
   } else {
     allowOrigin = origin && allowed.has(origin) ? origin : "";
   }

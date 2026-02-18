@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { checkApiAuth } from "../../../lib/auth";
 import { getDb } from "../../../lib/db";
 import { logger } from "../../../lib/logger";
-import { getClientIp } from "../../../lib/rate-limit";
+import { checkAuthRateLimit, getClientIp } from "../../../lib/rate-limit";
 
 export const Route = createFileRoute("/api/conversations/$conversationId")({
   server: {
@@ -20,6 +20,14 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
               status: 401,
               headers: { "Content-Type": "application/json" },
             });
+          }
+
+          const userRate = checkAuthRateLimit(auth.userId);
+          if (!userRate.allowed) {
+            return new Response(
+              JSON.stringify({ error: "Too many requests" }),
+              { status: 429, headers: { "Content-Type": "application/json" } },
+            );
           }
 
           const { conversationId } = params;
@@ -49,11 +57,13 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
             { headers: { "Content-Type": "application/json" } },
           );
         } catch (e) {
-          const message = e instanceof Error ? e.message : "Unknown error";
-          return new Response(JSON.stringify({ error: message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
+          logger.error("conversations_get_error", {
+            error: e instanceof Error ? e.message : "Unknown error",
           });
+          return new Response(
+            JSON.stringify({ error: "Internal server error" }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
         }
       },
       DELETE: async ({ params, request }) => {
@@ -69,6 +79,14 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
               status: 401,
               headers: { "Content-Type": "application/json" },
             });
+          }
+
+          const userRate = checkAuthRateLimit(auth.userId);
+          if (!userRate.allowed) {
+            return new Response(
+              JSON.stringify({ error: "Too many requests" }),
+              { status: 429, headers: { "Content-Type": "application/json" } },
+            );
           }
 
           const { conversationId } = params;
@@ -88,11 +106,13 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
             headers: { "Content-Type": "application/json" },
           });
         } catch (e) {
-          const message = e instanceof Error ? e.message : "Unknown error";
-          return new Response(JSON.stringify({ error: message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
+          logger.error("conversations_delete_error", {
+            error: e instanceof Error ? e.message : "Unknown error",
           });
+          return new Response(
+            JSON.stringify({ error: "Internal server error" }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
         }
       },
     },

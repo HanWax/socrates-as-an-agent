@@ -6,7 +6,7 @@ import {
   MAX_BODY_SIZE,
   validateMessageParts,
 } from "../../../lib/message-validation";
-import { getClientIp } from "../../../lib/rate-limit";
+import { checkAuthRateLimit, getClientIp } from "../../../lib/rate-limit";
 
 export const Route = createFileRoute(
   "/api/conversations/$conversationId/messages",
@@ -36,6 +36,14 @@ export const Route = createFileRoute(
             return new Response(
               JSON.stringify({ error: "Request body too large" }),
               { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          const userRate = checkAuthRateLimit(auth.userId);
+          if (!userRate.allowed) {
+            return new Response(
+              JSON.stringify({ error: "Too many requests" }),
+              { status: 429, headers: { "Content-Type": "application/json" } },
             );
           }
 
@@ -129,11 +137,13 @@ export const Route = createFileRoute(
             headers: { "Content-Type": "application/json" },
           });
         } catch (e) {
-          const message = e instanceof Error ? e.message : "Unknown error";
-          return new Response(JSON.stringify({ error: message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
+          logger.error("conversations_message_create_error", {
+            error: e instanceof Error ? e.message : "Unknown error",
           });
+          return new Response(
+            JSON.stringify({ error: "Internal server error" }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
         }
       },
     },

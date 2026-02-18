@@ -79,11 +79,11 @@ describe("corsHeaders", () => {
       expect(corsHeaders(null)).toEqual({});
     });
 
-    it("echoes explicit origin (CSRF check is the actual gatekeeper)", () => {
-      // With no allow-list, corsHeaders echoes any non-null origin.
-      // The CSRF check (checkCsrf) is what blocks cross-origin requests.
+    it("returns empty object for explicit origin (same-origin only)", () => {
+      // With no allow-list, corsHeaders returns no CORS headers at all.
+      // Same-origin requests don't need CORS; cross-origin requests are blocked.
       const headers = corsHeaders("https://evil.com");
-      expect(headers["Access-Control-Allow-Origin"]).toBe("https://evil.com");
+      expect(headers).toEqual({});
     });
   });
 
@@ -180,18 +180,14 @@ describe("checkCsrf", () => {
 
 describe("preflightResponse", () => {
   describe("when ALLOWED_ORIGIN is unset", () => {
-    it("returns 204 for any origin (no allow-list means echo)", () => {
-      // With no ALLOWED_ORIGIN, corsHeaders echoes any non-null origin,
-      // so preflight succeeds. The CSRF check on POST is the real guard.
+    it("returns 403 for any origin (same-origin only, no CORS)", () => {
+      // With no ALLOWED_ORIGIN, all cross-origin preflights are rejected.
       const req = new Request("http://localhost/api/chat", {
         method: "OPTIONS",
         headers: { origin: "https://evil.com" },
       });
       const res = preflightResponse(req);
-      expect(res.status).toBe(204);
-      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
-        "https://evil.com",
-      );
+      expect(res.status).toBe(403);
     });
 
     it("returns 403 when no origin header", () => {
