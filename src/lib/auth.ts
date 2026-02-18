@@ -1,40 +1,24 @@
+import { auth } from "@clerk/tanstack-react-start/server";
 import { logger } from "./logger";
 
-let warnedMissingKey = false;
-let warnedAllowUnauth = false;
+type AuthFailureReason = "unauthenticated" | "auth_unavailable";
 
-export function checkApiAuth(
-  request: Request,
-): { ok: true } | { ok: false; reason: "missing_api_key" | "invalid_token" } {
-  const apiKey = process.env.CHAT_API_KEY;
-  const allowUnauth = process.env.ALLOW_UNAUTHENTICATED_CHAT === "true";
-
-  if (!apiKey) {
-    if (allowUnauth) {
-      if (!warnedAllowUnauth) {
-        logger.warn("auth_disabled", {
-          reason: "CHAT_API_KEY missing",
-          allowUnauth: true,
-        });
-        warnedAllowUnauth = true;
-      }
-      return { ok: true };
+export async function checkApiAuth(
+  _request: Request,
+): Promise<
+  { ok: true; userId: string } | { ok: false; reason: AuthFailureReason }
+> {
+  try {
+    const session = await auth();
+    if (!session.userId) {
+      return { ok: false, reason: "unauthenticated" };
     }
 
-    if (!warnedMissingKey) {
-      logger.warn("auth_missing", { reason: "CHAT_API_KEY missing" });
-      warnedMissingKey = true;
-    }
-
-    return { ok: false, reason: "missing_api_key" };
+    return { ok: true, userId: session.userId };
+  } catch (error) {
+    logger.warn("auth_unavailable", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return { ok: false, reason: "auth_unavailable" };
   }
-
-  const auth = request.headers.get("authorization");
-  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-
-  if (!token || token !== apiKey) {
-    return { ok: false, reason: "invalid_token" };
-  }
-
-  return { ok: true };
 }

@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/conversations/")({
     handlers: {
       GET: async ({ request }) => {
         try {
-          const auth = checkApiAuth(request);
+          const auth = await checkApiAuth(request);
           if (!auth.ok) {
             logger.warn("auth_failed", {
               ip: getClientIp(request),
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/conversations/")({
       },
       POST: async ({ request }) => {
         try {
-          const auth = checkApiAuth(request);
+          const auth = await checkApiAuth(request);
           if (!auth.ok) {
             logger.warn("auth_failed", {
               ip: getClientIp(request),

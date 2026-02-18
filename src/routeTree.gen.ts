@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
+import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as ApiModelsRouteImport } from './routes/api/models'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiConversationsIndexRouteImport } from './routes/api/conversations/index'
@@ -19,6 +21,16 @@ import { Route as ApiConversationsConversationIdMessagesRouteImport } from './ro
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpSplatRoute = SignUpSplatRouteImport.update({
+  id: '/sign-up/$',
+  path: '/sign-up/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInSplatRoute = SignInSplatRouteImport.update({
+  id: '/sign-in/$',
+  path: '/sign-in/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiModelsRoute = ApiModelsRouteImport.update({
@@ -53,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
   '/api/models': typeof ApiModelsRoute
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/$': typeof SignUpSplatRoute
   '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
   '/api/conversations/': typeof ApiConversationsIndexRoute
   '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRoute
@@ -61,6 +75,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
   '/api/models': typeof ApiModelsRoute
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/$': typeof SignUpSplatRoute
   '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
   '/api/conversations': typeof ApiConversationsIndexRoute
   '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRoute
@@ -70,6 +86,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
   '/api/models': typeof ApiModelsRoute
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/$': typeof SignUpSplatRoute
   '/api/conversations/$conversationId': typeof ApiConversationsConversationIdRouteWithChildren
   '/api/conversations/': typeof ApiConversationsIndexRoute
   '/api/conversations/$conversationId/messages': typeof ApiConversationsConversationIdMessagesRoute
@@ -80,6 +98,8 @@ export interface FileRouteTypes {
     | '/'
     | '/api/chat'
     | '/api/models'
+    | '/sign-in/$'
+    | '/sign-up/$'
     | '/api/conversations/$conversationId'
     | '/api/conversations/'
     | '/api/conversations/$conversationId/messages'
@@ -88,6 +108,8 @@ export interface FileRouteTypes {
     | '/'
     | '/api/chat'
     | '/api/models'
+    | '/sign-in/$'
+    | '/sign-up/$'
     | '/api/conversations/$conversationId'
     | '/api/conversations'
     | '/api/conversations/$conversationId/messages'
@@ -96,6 +118,8 @@ export interface FileRouteTypes {
     | '/'
     | '/api/chat'
     | '/api/models'
+    | '/sign-in/$'
+    | '/sign-up/$'
     | '/api/conversations/$conversationId'
     | '/api/conversations/'
     | '/api/conversations/$conversationId/messages'
@@ -105,6 +129,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiModelsRoute: typeof ApiModelsRoute
+  SignInSplatRoute: typeof SignInSplatRoute
+  SignUpSplatRoute: typeof SignUpSplatRoute
   ApiConversationsConversationIdRoute: typeof ApiConversationsConversationIdRouteWithChildren
   ApiConversationsIndexRoute: typeof ApiConversationsIndexRoute
 }
@@ -116,6 +142,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up/$': {
+      id: '/sign-up/$'
+      path: '/sign-up/$'
+      fullPath: '/sign-up/$'
+      preLoaderRoute: typeof SignUpSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in/$': {
+      id: '/sign-in/$'
+      path: '/sign-in/$'
+      fullPath: '/sign-in/$'
+      preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/models': {
@@ -175,6 +215,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiChatRoute: ApiChatRoute,
   ApiModelsRoute: ApiModelsRoute,
+  SignInSplatRoute: SignInSplatRoute,
+  SignUpSplatRoute: SignUpSplatRoute,
   ApiConversationsConversationIdRoute:
     ApiConversationsConversationIdRouteWithChildren,
   ApiConversationsIndexRoute: ApiConversationsIndexRoute,
@@ -184,10 +226,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

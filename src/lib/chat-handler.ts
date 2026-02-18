@@ -4,8 +4,8 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { checkCsrf, corsHeaders } from "./cors";
 import { checkApiAuth } from "./auth";
+import { checkCsrf, corsHeaders } from "./cors";
 import { logger } from "./logger";
 import { MAX_BODY_SIZE, validateMessages } from "./message-validation";
 import { getModelById, isValidModelId } from "./model";
@@ -114,7 +114,7 @@ export async function handleChatPost(request: Request): Promise<Response> {
   }
 
   // Auth
-  const authResult = checkApiAuth(request);
+  const authResult = await checkApiAuth(request);
   if (!authResult.ok) {
     logger.warn("auth_failed", { ip, reason: authResult.reason });
     return createErrorResponse(401, "Unauthorized", origin);

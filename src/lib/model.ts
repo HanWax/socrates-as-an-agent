@@ -9,6 +9,11 @@ export interface ModelOption {
 }
 
 const MODEL_OPTIONS: ModelOption[] = [
+  // { id: "claude-opus-4-6",
+  //   name: "Claude Opus 4.6",
+  //   provider: "anthropic",
+  //   modelId: "claude-opus-4-6-20250929",
+  // },
   {
     id: "claude-sonnet-4-5",
     name: "Claude Sonnet 4.5",
@@ -21,6 +26,13 @@ const MODEL_OPTIONS: ModelOption[] = [
     provider: "anthropic",
     modelId: "claude-haiku-4-5-20251001",
   },
+  // Let's add expert open ai model too.
+  // {
+  //   id: "gpt-4o",
+  //   name: "GPT-4o",
+  //   provider: "openai",
+  //   modelId: "gpt-4o",
+  // },
   {
     id: "gpt-4o",
     name: "GPT-4o",

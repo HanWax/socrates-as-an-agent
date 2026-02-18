@@ -16,6 +16,7 @@
     "@ai-sdk/anthropic": "^3.0.44",
     "@ai-sdk/openai": "^3.0.29",
     "@ai-sdk/react": "^3.0.88",
+    "@clerk/tanstack-react-start": "^0.29.2",
     "@excalidraw/excalidraw": "^0.18.0",
     "@excalidraw/mermaid-to-excalidraw": "^2.0.0",
     "@neondatabase/serverless": "^1.0.2",
@@ -52,6 +53,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "jsdom": "^27.0.0",
+    "playwright": "^1.58.2",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vitest": "^3.0.5"

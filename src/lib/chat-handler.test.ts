@@ -29,7 +29,11 @@ vi.mock("./rate-limit", () => ({
   checkRateLimit: vi.fn(() => ({ allowed: true, remaining: 19 })),
   getClientIp: vi.fn(() => "127.0.0.1"),
 }));
+vi.mock("@clerk/tanstack-react-start/server", () => ({
+  auth: vi.fn(async () => ({ userId: "user_123" })),
+}));
 
+import { auth } from "@clerk/tanstack-react-start/server";
 import { streamText } from "ai";
 import { handleChatPost, SYSTEM_PROMPT } from "./chat-handler";
 import { logger } from "./logger";
@@ -99,8 +103,9 @@ describe("handleChatPost", () => {
       remaining: 19,
     });
     vi.mocked(isValidModelId).mockReturnValue(true);
-    delete process.env.CHAT_API_KEY;
-    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
+    vi.mocked(auth).mockResolvedValue({
+      userId: "user_123",
+    } as Awaited<ReturnType<typeof auth>>);
   });
 
   it("calls streamText with system prompt, model, tools, and converted messages", async () => {
@@ -187,8 +192,9 @@ describe("handleChatPost", () => {
 describe("rate limiting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.CHAT_API_KEY;
-    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
+    vi.mocked(auth).mockResolvedValue({
+      userId: "user_123",
+    } as Awaited<ReturnType<typeof auth>>);
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
@@ -214,53 +220,37 @@ describe("authentication", () => {
       allowed: true,
       remaining: 19,
     });
-    delete process.env.ALLOW_UNAUTHENTICATED_CHAT;
+    vi.mocked(auth).mockResolvedValue({
+      userId: "user_123",
+    } as Awaited<ReturnType<typeof auth>>);
   });
 
-  it("returns 401 when CHAT_API_KEY is set but no token provided", async () => {
-    process.env.CHAT_API_KEY = "secret-key";
+  it("returns 401 when Clerk auth has no user session", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      userId: null,
+    } as Awaited<ReturnType<typeof auth>>);
 
     const request = createRequest({ messages: [] });
     const response = await handleChatPost(request);
 
     expect(response.status).toBe(401);
-    delete process.env.CHAT_API_KEY;
   });
 
-  it("returns 401 when token does not match", async () => {
-    process.env.CHAT_API_KEY = "secret-key";
-
-    const request = createRequest(
-      { messages: [] },
-      {
-        Authorization: "Bearer wrong-key",
-      },
+  it("returns 401 when Clerk middleware is unavailable", async () => {
+    vi.mocked(auth).mockRejectedValue(
+      new Error("Clerk middleware not configured"),
     );
+
+    const request = createRequest({ messages: [] });
     const response = await handleChatPost(request);
 
     expect(response.status).toBe(401);
-    delete process.env.CHAT_API_KEY;
   });
 
-  it("allows request when token matches", async () => {
-    process.env.CHAT_API_KEY = "secret-key";
-    setupStreamTextMock();
-
-    const request = createRequest(
-      { messages: [] },
-      {
-        Authorization: "Bearer secret-key",
-      },
-    );
-    const response = await handleChatPost(request);
-
-    expect(response.status).toBe(200);
-    delete process.env.CHAT_API_KEY;
-  });
-
-  it("allows request when CHAT_API_KEY is not configured", async () => {
-    delete process.env.CHAT_API_KEY;
-    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
+  it("allows request when Clerk auth has a signed in user", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      userId: "user_123",
+    } as Awaited<ReturnType<typeof auth>>);
     setupStreamTextMock();
 
     const request = createRequest({ messages: [] });
@@ -277,8 +267,9 @@ describe("request validation", () => {
       allowed: true,
       remaining: 19,
     });
-    delete process.env.CHAT_API_KEY;
-    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
+    vi.mocked(auth).mockResolvedValue({
+      userId: "user_123",
+    } as Awaited<ReturnType<typeof auth>>);
   });
 
   it("returns 400 when messages exceed max count", async () => {
@@ -369,8 +360,9 @@ describe("error handling", () => {
       allowed: true,
       remaining: 19,
     });
-    delete process.env.CHAT_API_KEY;
-    process.env.ALLOW_UNAUTHENTICATED_CHAT = "true";
+    vi.mocked(auth).mockResolvedValue({
+      userId: "user_123",
+    } as Awaited<ReturnType<typeof auth>>);
   });
 
   it("returns 500 when streamText throws", async () => {

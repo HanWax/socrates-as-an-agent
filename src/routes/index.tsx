@@ -2119,7 +2119,9 @@ function ChatView({
                     height={32}
                     className="w-8 h-8 rounded-full object-cover shrink-0 mt-1"
                   />
-                  <div className="bubble-assistant min-w-0 px-4 py-3">{renderMessageParts(message)}</div>
+                  <div className="bubble-assistant min-w-0 px-4 py-3">
+                    {renderMessageParts(message)}
+                  </div>
                 </div>
               )}
             </div>

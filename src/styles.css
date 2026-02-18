@@ -1,42 +1,70 @@
 @import "tailwindcss";
 
 :root {
-  --berry-100: #da9ee6;
-  --berry-200: #c96edc;
-  --berry-300: #ba3cd4;
-  --berry-400: #9a24b2;
-  --berry-500: #6f1c80;
-  --berry-600: #451350;
-  --berry-700: #1c0820;
+  /* Miró Cobalt Blue */
+  --miro-blue-100: #d8e2f0;
+  --miro-blue-200: #a8bdd4;
+  --miro-blue-300: #4a7aaf;
+  --miro-blue-400: #1d3557;
+  --miro-blue-500: #142a47;
 
-  --color-2-100: #fce9ec;
-  --color-2-200: #f5b1bd;
-  --color-2-300: #f0768d;
-  --color-2-400: #ed3a5b;
-  --color-2-500: #d0173a;
-  --color-2-600: #94142c;
-  --color-2-700: #5b0e1c;
+  /* Miró Vermillion Red */
+  --miro-red-100: #f5e1e1;
+  --miro-red-200: #e8a8a8;
+  --miro-red-300: #d62828;
+  --miro-red-400: #a52020;
+  --miro-red-500: #7a1818;
 
-  --color-3-100: #fff1e5;
-  --color-3-200: #ffc495;
-  --color-3-300: #ff9745;
-  --color-3-400: #f36b00;
-  --color-3-500: #a34800;
+  /* Miró Cadmium Yellow */
+  --miro-yellow-100: #fdf6e0;
+  --miro-yellow-200: #f9e8a8;
+  --miro-yellow-300: #f4d35e;
+  --miro-yellow-400: #e8c430;
+  --miro-yellow-500: #c4a420;
 
-  --color-4-100: #a6ede4;
-  --color-4-200: #56e2d1;
-  --color-4-300: #1cc2ae;
-  --color-4-400: #137065;
-  --color-4-500: #07221f;
+  /* Miró Emerald Green */
+  --miro-green-100: #d8ede4;
+  --miro-green-200: #8dc4a8;
+  --miro-green-300: #2d6a4f;
+  --miro-green-400: #1b4030;
+  --miro-green-500: #0f261c;
+
+  /* Canvas & ink */
+  --miro-canvas: #f5f0e8;
+  --miro-ink: #1a1a1a;
+  --miro-warm-border: #d4cfc6;
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
-  @apply m-0 bg-white;
+  @apply m-0;
+  background: #f5f0e8;
+  height: 100%;
+  overflow: hidden;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Miró-inspired biomorphic chat bubbles */
+.bubble-user {
+  border-radius: 1.6rem 2rem 0.3rem 1.4rem / 1.8rem 1.5rem 0.4rem 1.6rem;
+}
+
+.bubble-assistant {
+  border-radius: 2rem 1.6rem 1.4rem 0.3rem / 1.5rem 1.8rem 1.6rem 0.4rem;
+  background: rgba(29, 53, 87, 0.04);
+  border: 1.5px solid rgba(29, 53, 87, 0.1);
+}
+
+.bubble-composer {
+  border-radius: 1.8rem 2.2rem 1.6rem 2rem / 2rem 1.6rem 2rem 1.8rem;
 }
 
 code {
@@ -92,13 +120,13 @@ code {
 .prose-socrates blockquote {
   margin: 0.5em 0;
   padding-left: 1em;
-  border-left: 3px solid #9a24b2;
+  border-left: 3px solid #1d3557;
   color: #4a4a4a;
 }
 
 .prose-socrates code {
   font-size: 0.9em;
-  background: #fce9ec;
+  background: #ede8df;
   color: #1a1a1a;
   padding: 0.15em 0.4em;
   border-radius: 4px;
@@ -148,13 +176,13 @@ code {
 }
 
 .prose-socrates a {
-  color: #9a24b2;
+  color: #1d3557;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .prose-socrates a:hover {
-  color: #6f1c80;
+  color: #d62828;
 }
 
 .prose-socrates hr {
@@ -317,4 +345,25 @@ code {
 .prose-user th {
   background: rgba(255, 255, 255, 0.1);
   font-weight: 600;
+}
+
+/* Auth shell styling keeps sign-in UI aligned with the colorful sketch aesthetic */
+.auth-shell input {
+  border-radius: 12px;
+  border: 1.5px solid #d4cfc6;
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow: inset 0 1px 0 rgba(29, 53, 87, 0.04);
+}
+
+.auth-shell input::placeholder {
+  color: #8b8b8b;
+}
+
+.auth-shell button[type="submit"] {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #1d3557, #2d6a4f);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 3px 3px 0 rgba(26, 26, 26, 0.35);
 }

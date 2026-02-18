@@ -41,7 +41,10 @@ export function validateMessageParts(
       if (p.type === "file") {
         fileCount++;
 
-        if (typeof p.mediaType === "string" && !ALLOWED_IMAGE_TYPES.has(p.mediaType)) {
+        if (
+          typeof p.mediaType === "string" &&
+          !ALLOWED_IMAGE_TYPES.has(p.mediaType)
+        ) {
           return {
             valid: false,
             error: `File type not allowed: ${p.mediaType}`,

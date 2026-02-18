@@ -35,10 +35,14 @@ export function DiagramPart({
   state: string;
   output?: DiagramOutput;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState<boolean>(true);
   const [svgUrl, setSvgUrl] = useState<string | null>(null);
+  const [svgDimensions, setSvgDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
+  const mountedRef = useRef<boolean>(true);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -51,6 +55,9 @@ export function DiagramPart({
     if (state !== "output-available" || !output?.mermaidSyntax) return;
 
     let cancelled = false;
+    setError(null);
+    setSvgUrl(null);
+    setSvgDimensions(null);
 
     (async () => {
       try {
@@ -74,6 +81,26 @@ export function DiagramPart({
           exportPadding: 16,
         });
         if (cancelled) return;
+
+        const widthAttr = svg.getAttribute("width");
+        const heightAttr = svg.getAttribute("height");
+        let width = widthAttr ? Number.parseFloat(widthAttr) : Number.NaN;
+        let height = heightAttr ? Number.parseFloat(heightAttr) : Number.NaN;
+
+        if (!Number.isFinite(width) || !Number.isFinite(height)) {
+          const viewBox = svg.getAttribute("viewBox");
+          if (viewBox) {
+            const parts = viewBox.trim().split(/\s+/).map(Number);
+            if (parts.length === 4) {
+              width = parts[2];
+              height = parts[3];
+            }
+          }
+        }
+
+        if (Number.isFinite(width) && Number.isFinite(height)) {
+          setSvgDimensions({ width, height });
+        }
 
         const svgString = svg.outerHTML;
         const blob = new Blob([svgString], { type: "image/svg+xml" });
@@ -106,20 +133,26 @@ export function DiagramPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <PenTool size={14} className="animate-pulse" />
-        Drawing diagram...
+        <PenTool
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Drawing diagram…
       </div>
     );
   }
 
+  const diagramWidth = svgDimensions?.width ?? 800;
+  const diagramHeight = svgDimensions?.height ?? 600;
+
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D4CFC6]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <PenTool size={14} className="text-[#9a24b2]" />
+        <PenTool size={14} className="text-[#1D3557]" />
         {output?.title ?? "Diagram"}
         <ChevronDown
           size={14}
@@ -127,13 +160,13 @@ export function DiagramPart({
         />
       </button>
       {open ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2">
+        <div className="border-t border-[#D4CFC6] px-3 py-2">
           {error ? (
             <div>
               <p className="text-red-500 mb-2">
                 Could not render diagram: {error}
               </p>
-              <pre className="rounded-lg bg-[#1a1a1a] text-[#da9ee6] p-3 text-xs overflow-x-auto whitespace-pre-wrap">
+              <pre className="rounded-lg bg-[#1a1a1a] text-[#D8E2F0] p-3 text-xs overflow-x-auto whitespace-pre-wrap">
                 {output?.mermaidSyntax}
               </pre>
             </div>
@@ -145,13 +178,18 @@ export function DiagramPart({
               <img
                 src={svgUrl}
                 alt={output?.title ?? "Diagram"}
+                width={diagramWidth}
+                height={diagramHeight}
                 className="block w-full h-auto"
               />
             </div>
           ) : (
             <div className="flex items-center gap-2 text-[#8b8b8b] italic py-2">
-              <PenTool size={14} className="animate-pulse" />
-              Rendering...
+              <PenTool
+                size={14}
+                className="animate-pulse motion-reduce:animate-none"
+              />
+              Rendering…
             </div>
           )}
         </div>

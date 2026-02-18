@@ -15,7 +15,7 @@ export const Route = createFileRoute(
     handlers: {
       POST: async ({ request, params }) => {
         try {
-          const auth = checkApiAuth(request);
+          const auth = await checkApiAuth(request);
           if (!auth.ok) {
             logger.warn("auth_failed", {
               ip: getClientIp(request),

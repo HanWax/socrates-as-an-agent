@@ -11,6 +11,11 @@ count.txt
 .output
 .vercel
 .agents
+.agent
+.claude
+.cursor
+.windsurf
+output
 .vinxi
 __unconfig*
 todos.json

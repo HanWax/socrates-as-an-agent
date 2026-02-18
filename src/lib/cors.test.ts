@@ -124,6 +124,15 @@ describe("checkCsrf", () => {
       expect(result).toBeNull();
     });
 
+    it("passes for same-origin request with Origin header", () => {
+      const req = new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { origin: "http://localhost" },
+      });
+      const result = checkCsrf(req);
+      expect(result).toBeNull();
+    });
+
     it("blocks cross-origin request", async () => {
       const result = checkCsrf(makeRequest("https://evil.com"));
       expect(result).not.toBeNull();
@@ -141,6 +150,15 @@ describe("checkCsrf", () => {
 
     it("passes for an allowed origin", () => {
       const result = checkCsrf(makeRequest("https://myapp.com"));
+      expect(result).toBeNull();
+    });
+
+    it("passes for true same-origin requests not in ALLOWED_ORIGIN", () => {
+      const req = new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { origin: "http://localhost" },
+      });
+      const result = checkCsrf(req);
       expect(result).toBeNull();
     });
 

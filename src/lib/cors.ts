@@ -57,15 +57,26 @@ export function corsHeaders(origin: string | null): Record<string, string> {
 
 /**
  * CSRF check: validate that the request's Origin header matches the
- * allow-list. Browsers always attach an Origin header to cross-origin
- * requests and to same-origin POSTs, so a missing-or-mismatched Origin
- * on a state-changing request is a strong CSRF signal.
+ * allow-list, or that it matches the request URL for true same-origin
+ * requests. Browsers attach an Origin header to cross-origin requests
+ * and typically to same-origin POSTs, so mismatches are a strong CSRF
+ * signal.
  *
  * Returns an error Response when the check fails, or null when it passes.
  */
 export function checkCsrf(request: Request): Response | null {
   const origin = request.headers.get("origin");
   if (isOriginAllowed(origin)) return null;
+
+  // Always allow true same-origin requests, even when ALLOWED_ORIGIN is
+  // configured for additional cross-origin callers.
+  if (origin) {
+    try {
+      if (new URL(request.url).origin === origin) return null;
+    } catch {
+      // Ignore malformed request URL and continue to rejection.
+    }
+  }
 
   return new Response(
     JSON.stringify({ error: "Forbidden — origin not allowed" }),
