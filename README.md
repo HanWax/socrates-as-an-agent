@@ -1,4 +1,4 @@
-# Soundboard as a Service
+# Socrates as a Service
 
 A Socratic method chatbot that challenges your thinking through probing questions — never giving direct answers, only helping you discover what you think and whether it holds up to scrutiny.
 
@@ -109,7 +109,7 @@ Models are filtered by which API keys are configured — only available models a
 
 - **CORS/CSRF protection** — origin validation with configurable allowlist
 - **Rate limiting** — sliding window, 20 requests/min per IP (in-memory)
-- **Bearer token auth** — optional `CHAT_API_KEY` for API access control
+- **Clerk authentication** — session-based auth for app and API routes
 - **Input validation** — max 100 messages, 10K chars/text, 4 files/message, 5 MB/file
 - **Request size limit** — 5 MB max body
 
@@ -117,6 +117,7 @@ Models are filtered by which API keys are configured — only available models a
 
 - **Node.js** 18+ (20+ recommended)
 - **pnpm** — install with `npm install -g pnpm`
+- A [Clerk](https://clerk.com/) application (publishable + secret keys)
 - An API key from **one** of the following providers:
   - [Anthropic](https://console.anthropic.com/) (default — uses Claude Sonnet 4.5)
   - [OpenAI](https://platform.openai.com/) (uses GPT-4o)
@@ -138,6 +139,10 @@ cp .env.example .env
 Open `.env` and fill in your keys:
 
 ```env
+# Clerk auth keys:
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+
 # Pick one provider and add its key:
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
@@ -189,8 +194,7 @@ src/
 │   └── logger.ts                        # Structured JSON logging
 ├── components/
 │   ├── sidebar.tsx                      # Conversation history sidebar
-│   ├── DiagramPart.tsx                  # Mermaid → Excalidraw diagram renderer
-│   └── SocratesSketch.tsx               # Hand-drawn Socrates SVG illustration
+│   └── DiagramPart.tsx                  # Mermaid → Excalidraw diagram renderer
 ├── styles.css                           # Global styles (Tailwind CSS v4)
 └── router.tsx                           # TanStack Router config
 ```
@@ -278,6 +282,8 @@ CMD ["node", ".output/server/index.mjs"]
 ```bash
 docker build -t socrates .
 docker run -p 3000:3000 \
+  -e CLERK_PUBLISHABLE_KEY=pk_test_your_key \
+  -e CLERK_SECRET_KEY=sk_test_your_key \
   -e MODEL_PROVIDER=anthropic \
   -e ANTHROPIC_API_KEY=sk-ant-your-key \
   socrates
@@ -294,7 +300,8 @@ docker run -p 3000:3000 \
 | `MODEL_PROVIDER`    | No       | `anthropic`  | `"anthropic"` or `"openai"`                               |
 | `DATABASE_URL`      | No       | —            | Neon PostgreSQL connection string (for conversation persistence) |
 | `TAVILY_API_KEY`    | No       | —            | Tavily API key (for web search and resource discovery tools) |
-| `CHAT_API_KEY`      | No       | —            | Bearer token for `/api/chat` authentication               |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Yes  | —            | Clerk publishable key for the browser SDK                 |
+| `CLERK_SECRET_KEY`  | Yes      | —            | Clerk secret key used by server middleware                |
 | `ALLOWED_ORIGIN`    | No       | —            | Comma-separated CORS allowlist (e.g. `https://yourdomain.com`) |
 
 \*Only the key for your chosen provider is required.

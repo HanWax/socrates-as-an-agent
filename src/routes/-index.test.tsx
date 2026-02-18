@@ -19,17 +19,30 @@ import {
 
 const mockSendMessage = vi.fn();
 const mockUseChat = vi.fn();
+const mockUseAuth = vi.fn(() => ({ isLoaded: true, isSignedIn: true }));
 
 vi.mock("@ai-sdk/react", () => ({
   useChat: (...args: unknown[]) => mockUseChat(...args),
 }));
+vi.mock("@clerk/tanstack-react-start", () => ({
+  useAuth: () => mockUseAuth(),
+  SignIn: () => <div data-testid="clerk-sign-in">SignIn component</div>,
+  SignUp: () => <div data-testid="clerk-sign-up">SignUp component</div>,
+  UserButton: () => null,
+}));
+
+const mockSearch = { c: undefined as string | undefined };
+const mockNavigate = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (opts: Record<string, unknown>) => ({
     ...opts,
-    useSearch: () => ({ c: undefined }),
+    useSearch: () => mockSearch,
   }),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockNavigate,
+  Navigate: ({ to }: { to: unknown }) => (
+    <div data-testid="router-navigate" data-to={String(to)} />
+  ),
 }));
 
 // jsdom doesn't implement scrollIntoView
@@ -79,6 +92,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   globalThis.fetch = originalFetch;
+  vi.useRealTimers();
 });
 
 import { Chat } from "./index";
@@ -130,6 +144,8 @@ describe("Chat", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearch.c = undefined;
+    mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: true });
     useChatDefaults();
   });
 
@@ -148,7 +164,7 @@ describe("Chat", () => {
 
     it("renders the logo", () => {
       render(<Chat />);
-      const img = screen.getByAltText("Soundboard as a Service");
+      const img = screen.getByAltText("Socrates as a Service");
       expect(img).toBeDefined();
       expect(img.getAttribute("src")).toBe("/socrates.svg");
     });
@@ -156,7 +172,7 @@ describe("Chat", () => {
     it("renders a textarea with placeholder", () => {
       render(<Chat />);
       expect(
-        screen.getByPlaceholderText("Share a thought or belief..."),
+        screen.getByPlaceholderText("Share a thought or belief…"),
       ).toBeDefined();
     });
 
@@ -172,7 +188,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
       fireEvent.change(textarea, { target: { value: "What is justice?" } });
       const submitButtons = screen
@@ -185,7 +201,7 @@ describe("Chat", () => {
       useChatDefaults({ status: "streaming" });
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
       expect(textarea.hasAttribute("disabled")).toBe(true);
     });
@@ -194,6 +210,28 @@ describe("Chat", () => {
       render(<Chat />);
       const uploadBtn = screen.getByLabelText("Upload image");
       expect(uploadBtn).toBeDefined();
+    });
+  });
+
+  describe("authentication gate", () => {
+    it("redirects to sign-in route when signed out", () => {
+      mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: false });
+
+      render(<Chat />);
+
+      const redirect = screen.getByTestId("router-navigate");
+      expect(redirect.getAttribute("data-to")).toBe("/sign-in/$");
+      expect(screen.queryByTestId("clerk-sign-in")).toBeNull();
+      expect(screen.queryByTestId("clerk-sign-up")).toBeNull();
+    });
+
+    it("shows loading state while auth state is unresolved", () => {
+      mockUseAuth.mockReturnValue({ isLoaded: false, isSignedIn: false });
+
+      render(<Chat />);
+
+      expect(screen.getByText("Loading session…")).toBeDefined();
+      expect(screen.queryByTestId("router-navigate")).toBeNull();
     });
   });
 
@@ -257,7 +295,7 @@ describe("Chat", () => {
         messages: [makeMessage("1", "user", "Hello")],
       });
       render(<Chat />);
-      expect(screen.getByPlaceholderText("Reply...")).toBeDefined();
+      expect(screen.getByPlaceholderText("Reply…")).toBeDefined();
     });
 
     it("renders image attachment summary in user messages", () => {
@@ -288,12 +326,104 @@ describe("Chat", () => {
     });
   });
 
+  it("ignores stale conversation fetch when navigating quickly", async () => {
+    mockUseChat.mockImplementation(
+      (opts: { messages?: ReturnType<typeof makeMessage>[] }) => ({
+        messages: opts.messages ?? [],
+        sendMessage: mockSendMessage,
+        status: "ready",
+      }),
+    );
+
+    let resolveFirstConversationFetch: ((res: Response) => void) | null = null;
+    const firstConversationFetch = new Promise<Response>((resolve) => {
+      resolveFirstConversationFetch = resolve;
+    });
+
+    globalThis.fetch = vi.fn(
+      (input: string | URL | Request, init?: RequestInit) => {
+        if (typeof input === "string" && input === "/api/models") {
+          return Promise.resolve(
+            new Response(JSON.stringify([]), {
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        if (typeof input === "string" && input === "/api/conversations") {
+          if (init?.method === "POST") {
+            return Promise.resolve(
+              new Response(JSON.stringify({ id: "test-conv-id" }), {
+                headers: { "Content-Type": "application/json" },
+              }),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify({ conversations: [] }), {
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        if (
+          typeof input === "string" &&
+          input.startsWith("/api/conversations/")
+        ) {
+          const id = input.split("/").pop() ?? "";
+          if (id === "first") return firstConversationFetch;
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                messages: [
+                  {
+                    id: `msg-${id}`,
+                    role: "assistant",
+                    content: [{ type: "text", text: `Message ${id}` }],
+                    created_at: "2024-01-01T00:00:00Z",
+                  },
+                ],
+              }),
+              { headers: { "Content-Type": "application/json" } },
+            ),
+          );
+        }
+        return Promise.reject(new Error(`Unhandled fetch: ${String(input)}`));
+      },
+    ) as typeof fetch;
+
+    mockSearch.c = "first";
+    const { rerender } = render(<Chat />);
+
+    mockSearch.c = "second";
+    rerender(<Chat />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Message second")).toBeDefined();
+    });
+
+    resolveFirstConversationFetch?.(
+      new Response(
+        JSON.stringify({
+          messages: [
+            {
+              id: "msg-first",
+              role: "assistant",
+              content: [{ type: "text", text: "Message first" }],
+              created_at: "2024-01-01T00:00:00Z",
+            },
+          ],
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    await Promise.resolve();
+    expect(screen.queryByText("Message first")).toBeNull();
+  });
+
   describe("keyboard interaction", () => {
     it("calls sendMessage when Cmd+Enter is pressed with input", async () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
@@ -311,7 +441,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
@@ -329,7 +459,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
@@ -342,7 +472,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
 
       fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
@@ -354,7 +484,7 @@ describe("Chat", () => {
       useChatDefaults({ status: "streaming" });
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief...",
+        "Share a thought or belief…",
       );
 
       fireEvent.change(textarea, { target: { value: "Hello" } });

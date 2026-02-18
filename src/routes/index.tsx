@@ -1,6 +1,7 @@
 import { useChat } from "@ai-sdk/react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import type { UIMessage } from "ai";
+import { UserButton, useAuth } from "@clerk/tanstack-react-start";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import {
   BookmarkCheck,
   BookOpen,
@@ -74,11 +75,15 @@ interface SearchResult {
   snippet: string;
 }
 
-const clientApiKey =
-  (import.meta.env.VITE_CHAT_API_KEY as string | undefined) ?? undefined;
-const clientAuthHeaders = clientApiKey
-  ? { Authorization: `Bearer ${clientApiKey}` }
-  : {};
+function hashStringToIndex(input: string, modulo: number): number {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash +=
+      (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return (hash >>> 0) % modulo;
+}
 
 function safeExternalUrl(url: string): string | null {
   try {
@@ -104,8 +109,8 @@ function WebSearchPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <Globe size={14} className="animate-spin" />
-        Searching the web...
+        <Globe size={14} className="animate-spin motion-reduce:animate-none" />
+        Searching the web…
       </div>
     );
   }
@@ -113,13 +118,13 @@ function WebSearchPart({
   const results = output?.results ?? [];
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <Globe size={14} className="text-[#9a24b2]" />
+        <Globe size={14} className="text-[#1D3557]" />
         Web search ({results.length} results)
         <ChevronDown
           size={14}
@@ -127,7 +132,7 @@ function WebSearchPart({
         />
       </button>
       {open ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-2">
           {results.map((r) => {
             const safeUrl = safeExternalUrl(r.url);
             return (
@@ -137,14 +142,12 @@ function WebSearchPart({
                     href={safeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-[#9a24b2] hover:underline"
+                    className="font-medium text-[#1D3557] hover:underline"
                   >
                     {r.title}
                   </a>
                 ) : (
-                  <span className="font-medium text-[#9a24b2]">
-                    {r.title}
-                  </span>
+                  <span className="font-medium text-[#1D3557]">{r.title}</span>
                 )}
                 <p className="text-[#8b8b8b] leading-snug">{r.snippet}</p>
               </div>
@@ -166,15 +169,18 @@ function SaveInsightPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <BookmarkCheck size={14} className="animate-pulse" />
-        Saving insight...
+        <BookmarkCheck
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Saving insight…
       </div>
     );
   }
 
   return (
-    <div className="my-2 flex items-start gap-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] px-3 py-2 text-[13px]">
-      <BookmarkCheck size={14} className="mt-0.5 text-[#9a24b2] shrink-0" />
+    <div className="my-2 flex items-start gap-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] px-3 py-2 text-[13px]">
+      <BookmarkCheck size={14} className="mt-0.5 text-[#1D3557] shrink-0" />
       <div>
         <span className="font-medium text-[#1a1a1a]">Insight saved</span>
         {output?.topic ? (
@@ -204,20 +210,23 @@ function DevilsAdvocatePart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <Swords size={14} className="animate-pulse" />
-        Building strongest counterargument...
+        <Swords
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Building strongest counterargument…
       </div>
     );
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <Swords size={14} className="text-[#9a24b2]" />
+        <Swords size={14} className="text-[#1D3557]" />
         Devil's Advocate
         <ChevronDown
           size={14}
@@ -225,7 +234,7 @@ function DevilsAdvocatePart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Your position: </span>
             {output.userPosition}
@@ -240,14 +249,14 @@ function DevilsAdvocatePart({
               <ul className="mt-1 space-y-1 text-[#1a1a1a]">
                 {output.keyEvidence.map((e) => (
                   <li key={e} className="flex gap-1.5 leading-snug">
-                    <span className="text-[#9a24b2] shrink-0">&#8226;</span>
+                    <span className="text-[#1D3557] shrink-0">&#8226;</span>
                     {e}
                   </li>
                 ))}
               </ul>
             </div>
           ) : null}
-          <p className="text-[#9a24b2] font-medium italic leading-snug">
+          <p className="text-[#1D3557] font-medium italic leading-snug">
             {output.challengeQuestion}
           </p>
         </div>
@@ -290,20 +299,23 @@ function FactCheckPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <ShieldCheck size={14} className="animate-pulse" />
-        Checking claim...
+        <ShieldCheck
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Checking claim…
       </div>
     );
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <ShieldCheck size={14} className="text-[#9a24b2]" />
+        <ShieldCheck size={14} className="text-[#1D3557]" />
         Fact Check
         {output ? (
           <span className={`text-xs ${verdictColor[output.verdict]}`}>
@@ -316,7 +328,7 @@ function FactCheckPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Claim: </span>
             &ldquo;{output.claim}&rdquo;
@@ -378,20 +390,20 @@ function LogicalAnalysisPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <Brain size={14} className="animate-pulse" />
-        Analyzing reasoning...
+        <Brain size={14} className="animate-pulse motion-reduce:animate-none" />
+        Analyzing reasoning…
       </div>
     );
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <Brain size={14} className="text-[#9a24b2]" />
+        <Brain size={14} className="text-[#1D3557]" />
         Logical Analysis
         {output ? (
           <span className="text-xs text-[#8b8b8b]">— {output.fallacy}</span>
@@ -402,7 +414,7 @@ function LogicalAnalysisPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-2">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-2">
           <p className="text-[#8b8b8b]">
             <span className="font-medium text-[#1a1a1a]">Your reasoning: </span>
             &ldquo;{output.userReasoning}&rdquo;
@@ -415,7 +427,7 @@ function LogicalAnalysisPart({
             <span className="font-medium not-italic">Analogy: </span>
             {output.example}
           </p>
-          <p className="text-[#9a24b2] leading-snug">
+          <p className="text-[#1D3557] leading-snug">
             <span className="font-medium">Better framing: </span>
             {output.betterFraming}
           </p>
@@ -449,20 +461,20 @@ function PerspectiveShiftPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <Users size={14} className="animate-pulse" />
-        Gathering perspectives...
+        <Users size={14} className="animate-pulse motion-reduce:animate-none" />
+        Gathering perspectives…
       </div>
     );
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <Users size={14} className="text-[#9a24b2]" />
+        <Users size={14} className="text-[#1D3557]" />
         Perspective Shift — {output?.perspectives.length ?? 0} viewpoints
         <ChevronDown
           size={14}
@@ -470,7 +482,7 @@ function PerspectiveShiftPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-3">
           {output.perspectives.map((p) => (
             <div key={p.stakeholder}>
               <p className="font-medium text-[#1a1a1a]">{p.stakeholder}</p>
@@ -478,7 +490,7 @@ function PerspectiveShiftPart({
               <p className="text-[#8b8b8b] leading-snug">{p.reasoning}</p>
             </div>
           ))}
-          <p className="text-[#9a24b2] font-medium italic leading-snug">
+          <p className="text-[#1D3557] font-medium italic leading-snug">
             {output.blindSpotQuestion}
           </p>
         </div>
@@ -506,20 +518,23 @@ function ArgumentMapPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <GitBranch size={14} className="animate-pulse" />
-        Mapping argument structure...
+        <GitBranch
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Mapping argument structure…
       </div>
     );
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <GitBranch size={14} className="text-[#9a24b2]" />
+        <GitBranch size={14} className="text-[#1D3557]" />
         Argument Map
         <ChevronDown
           size={14}
@@ -527,8 +542,8 @@ function ArgumentMapPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
-          <div className="rounded-lg bg-[#9a24b2]/10 px-3 py-2">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-3">
+          <div className="rounded-lg bg-[#1D3557]/10 px-3 py-2">
             <span className="font-medium text-[#1a1a1a]">Claim: </span>
             <span className="text-[#1a1a1a]">{output.claim}</span>
           </div>
@@ -536,7 +551,7 @@ function ArgumentMapPart({
             <span className="font-medium text-[#1a1a1a]">Premises:</span>
             <div className="mt-1 space-y-2">
               {output.premises.map((p) => (
-                <div key={p.text} className="border-l-2 border-[#9a24b2] pl-3">
+                <div key={p.text} className="border-l-2 border-[#1D3557] pl-3">
                   <p className="text-[#1a1a1a] leading-snug">{p.text}</p>
                   {p.evidence.length > 0 ? (
                     <ul className="mt-1 space-y-0.5">
@@ -545,7 +560,7 @@ function ArgumentMapPart({
                           key={e}
                           className="flex gap-1.5 text-[#8b8b8b] leading-snug"
                         >
-                          <span className="text-[#9a24b2] shrink-0">
+                          <span className="text-[#1D3557] shrink-0">
                             &#8226;
                           </span>
                           {e}
@@ -559,7 +574,7 @@ function ArgumentMapPart({
           </div>
           <div>
             <span className="font-medium text-[#1a1a1a]">Conclusion: </span>
-            <span className="text-[#9a24b2] font-medium">
+            <span className="text-[#1D3557] font-medium">
               {output.conclusion}
             </span>
           </div>
@@ -577,7 +592,7 @@ function ArgumentMapPart({
                     <p className="text-[#1a1a1a] leading-snug">{ca.point}</p>
                     {ca.rebuttal ? (
                       <p className="text-[#8b8b8b] leading-snug mt-0.5">
-                        <span className="font-medium text-[#9a24b2]">
+                        <span className="font-medium text-[#1D3557]">
                           Rebuttal:{" "}
                         </span>
                         {ca.rebuttal}
@@ -632,20 +647,23 @@ function ReadingListPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <BookOpen size={14} className="animate-pulse" />
-        Curating reading list...
+        <BookOpen
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Curating reading list…
       </div>
     );
   }
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <BookOpen size={14} className="text-[#9a24b2]" />
+        <BookOpen size={14} className="text-[#1D3557]" />
         Reading List — {output?.topic}
         <ChevronDown
           size={14}
@@ -653,12 +671,12 @@ function ReadingListPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-3">
           {output.recommendations.map((rec) => {
             const Icon = typeIcon[rec.type];
             return (
               <div key={rec.title} className="flex gap-2">
-                <Icon size={14} className="mt-0.5 text-[#9a24b2] shrink-0" />
+                <Icon size={14} className="mt-0.5 text-[#1D3557] shrink-0" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-[#1a1a1a]">
@@ -667,7 +685,7 @@ function ReadingListPart({
                     <span className="text-[#8b8b8b]">by {rec.author}</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
+                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#D8E2F0] text-[#1D3557]">
                       {rec.type}
                     </span>
                     <span
@@ -715,8 +733,11 @@ function DiscoverResourcesPart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <Newspaper size={14} className="animate-pulse" />
-        Discovering recent resources...
+        <Newspaper
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Discovering recent resources…
       </div>
     );
   }
@@ -724,13 +745,13 @@ function DiscoverResourcesPart({
   const resources = output?.resources ?? [];
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px]">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a]"
+        className="flex w-full items-center gap-2 px-3 py-2 font-medium text-[#1a1a1a] rounded-t-xl hover:bg-[#D8E2F0]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D3557]/60"
       >
-        <Newspaper size={14} className="text-[#9a24b2]" />
+        <Newspaper size={14} className="text-[#1D3557]" />
         Recent Resources — {output?.topic}
         <ChevronDown
           size={14}
@@ -738,8 +759,8 @@ function DiscoverResourcesPart({
         />
       </button>
       {open && output ? (
-        <div className="border-t border-[#da9ee6] px-3 py-2 space-y-3">
-          <p className="text-[#9a24b2] italic leading-snug">{output.reason}</p>
+        <div className="border-t border-[#D4CFC6] px-3 py-2 space-y-3">
+          <p className="text-[#1D3557] italic leading-snug">{output.reason}</p>
           {resources.map((r) => {
             let domain = "";
             try {
@@ -754,12 +775,12 @@ function DiscoverResourcesPart({
                     href={r.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-[#9a24b2] hover:underline"
+                    className="font-medium text-[#1D3557] hover:underline"
                   >
                     {r.title}
                   </a>
                   {domain ? (
-                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
+                    <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#D8E2F0] text-[#1D3557]">
                       {domain}
                     </span>
                   ) : null}
@@ -814,8 +835,11 @@ function RetrievalPracticePart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <BrainCircuit size={14} className="animate-pulse" />
-        Preparing recall challenge...
+        <BrainCircuit
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Preparing recall challenge…
       </div>
     );
   }
@@ -824,15 +848,15 @@ function RetrievalPracticePart({
 
   if (output.status === "question") {
     return (
-      <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px] px-3 py-3 space-y-2">
+      <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px] px-3 py-3 space-y-2">
         <div className="flex items-center gap-2">
-          <BrainCircuit size={14} className="text-[#9a24b2]" />
+          <BrainCircuit size={14} className="text-[#1D3557]" />
           <span className="font-medium text-[#1a1a1a]">Recall Challenge</span>
-          <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
+          <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#D8E2F0] text-[#1D3557]">
             {output.topic}
           </span>
         </div>
-        <p className="text-[#9a24b2] italic leading-snug">{output.question}</p>
+        <p className="text-[#1D3557] italic leading-snug">{output.question}</p>
         {output.hint ? (
           <p className="text-[#8b8b8b] leading-snug text-[12px]">
             Hint: {output.hint}
@@ -847,11 +871,11 @@ function RetrievalPracticePart({
   if (!fb) return null;
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px] px-3 py-3 space-y-2">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px] px-3 py-3 space-y-2">
       <div className="flex items-center gap-2">
-        <BrainCircuit size={14} className="text-[#9a24b2]" />
+        <BrainCircuit size={14} className="text-[#1D3557]" />
         <span className="font-medium text-[#1a1a1a]">Recall Feedback</span>
-        <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#da9ee6] text-[#9a24b2]">
+        <span className="rounded px-1.5 py-0.5 text-[11px] bg-[#D8E2F0] text-[#1D3557]">
           {output.topic}
         </span>
         <span
@@ -895,7 +919,7 @@ function RetrievalPracticePart({
         </div>
       ) : null}
       <p className="text-[#1a1a1a] leading-snug">{fb.correctedExplanation}</p>
-      <p className="text-[#9a24b2] font-medium italic leading-snug">
+      <p className="text-[#1D3557] font-medium italic leading-snug">
         {fb.followUpQuestion}
       </p>
     </div>
@@ -928,8 +952,11 @@ function ProgressiveDisclosurePart({
   if (state !== "output-available") {
     return (
       <div className="flex items-center gap-2 text-[13px] text-[#8b8b8b] italic py-1">
-        <Layers size={14} className="animate-pulse" />
-        Building layered explanation...
+        <Layers
+          size={14}
+          className="animate-pulse motion-reduce:animate-none"
+        />
+        Building layered explanation…
       </div>
     );
   }
@@ -939,9 +966,9 @@ function ProgressiveDisclosurePart({
   const { layers } = output;
 
   return (
-    <div className="my-2 rounded-xl border border-[#da9ee6] bg-[#fce9ec] text-[13px] px-3 py-3 space-y-3">
+    <div className="my-2 rounded-xl border border-[#D4CFC6] bg-[#EDE8DF] text-[13px] px-3 py-3 space-y-3">
       <div className="flex items-center gap-2">
-        <Layers size={14} className="text-[#9a24b2]" />
+        <Layers size={14} className="text-[#1D3557]" />
         <span className="font-medium text-[#1a1a1a]">{output.concept}</span>
       </div>
 
@@ -952,8 +979,8 @@ function ProgressiveDisclosurePart({
             key={layer.level}
             className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-medium ${
               layer.level <= revealedLevel
-                ? "bg-[#9a24b2] text-white"
-                : "bg-[#da9ee6] text-[#8b8b8b]"
+                ? "bg-[#1D3557] text-white"
+                : "bg-[#D8E2F0] text-[#8b8b8b]"
             }`}
           >
             {layer.level}
@@ -967,7 +994,7 @@ function ProgressiveDisclosurePart({
         .map((layer) => (
           <div
             key={layer.level}
-            className="border-l-2 border-[#9a24b2] pl-3 space-y-1"
+            className="border-l-2 border-[#1D3557] pl-3 space-y-1"
           >
             <p className="font-medium text-[#1a1a1a]">
               Level {layer.level}: {layer.title}
@@ -978,7 +1005,7 @@ function ProgressiveDisclosurePart({
                 {layer.analogy}
               </p>
             ) : null}
-            <p className="text-[#9a24b2] italic leading-snug">
+            <p className="text-[#1D3557] italic leading-snug">
               {layer.readinessQuestion}
             </p>
           </div>
@@ -989,7 +1016,7 @@ function ProgressiveDisclosurePart({
         <button
           type="button"
           onClick={() => setRevealedLevel((l) => l + 1)}
-          className="flex items-center gap-1.5 rounded-lg border border-[#9a24b2] px-3 py-1.5 text-[12px] font-medium text-[#9a24b2] transition-colors hover:bg-[#9a24b2] hover:text-white"
+          className="flex items-center gap-1.5 rounded-lg border border-[#1D3557] px-3 py-1.5 text-[12px] font-medium text-[#1D3557] transition-colors hover:bg-[#1D3557] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D3557]/60 focus-visible:ring-offset-1"
         >
           Go deeper
           <ChevronDown size={12} />
@@ -1017,6 +1044,7 @@ interface ComposerProps {
   isDragging: boolean;
   files: FileList | undefined;
   fileUrls: string[];
+  enterToSend: boolean;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   fileInputRef: RefObject<HTMLInputElement | null>;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
@@ -1027,6 +1055,7 @@ interface ComposerProps {
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (index: number) => void;
+  onToggleEnterToSend: () => void;
 }
 
 function Composer({
@@ -1039,6 +1068,7 @@ function Composer({
   isDragging,
   files,
   fileUrls,
+  enterToSend,
   textareaRef,
   fileInputRef,
   onSubmit,
@@ -1049,8 +1079,17 @@ function Composer({
   onKeyDown,
   onFileChange,
   onRemoveFile,
+  onToggleEnterToSend,
 }: ComposerProps) {
   const hasFiles = files && files.length > 0;
+  const isMac =
+    typeof navigator !== "undefined" &&
+    /Mac|iPhone|iPad/.test(navigator.userAgent);
+  const modKey = isMac ? "\u2318" : "Ctrl";
+
+  const sendHint = enterToSend
+    ? `${modKey}+Return to add a new line`
+    : "Return to add a new line";
 
   return (
     <form
@@ -1068,14 +1107,16 @@ function Composer({
         onChange={onFileChange}
         className="hidden"
         data-testid="file-input"
+        name="attachments"
+        aria-label="Attach images"
       />
       <div
-        className={`relative rounded-2xl border bg-white transition-all focus-within:border-[#9a24b2] ${isDragging ? "border-[#9a24b2] border-dashed border-2" : "border-[#da9ee6]"}`}
-        style={{ boxShadow: composerShadow }}
+        className={`bubble-composer relative border-2 bg-white/92 backdrop-blur transition-[border-color,box-shadow] duration-200 focus-within:border-[#1D3557] focus-within:ring-4 focus-within:ring-[#1D3557]/15 ${isDragging ? "border-[#1D3557] border-dashed" : "border-[#1A1A1A]"}`}
+        style={{ boxShadow: "0 26px 80px rgba(26, 26, 26, 0.10)" }}
       >
         {hasFiles ? (
           <div
-            className="flex gap-2 px-5 pt-3 pb-1 overflow-x-auto"
+            className="flex gap-2 overflow-x-auto px-5 pt-3 pb-1"
             data-testid="file-preview"
           >
             {Array.from(files).map((file, index) => (
@@ -1086,12 +1127,14 @@ function Composer({
                 <img
                   src={fileUrls[index] ?? ""}
                   alt={file.name}
-                  className="w-16 h-16 rounded-lg object-cover border border-[#da9ee6]"
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 rounded-lg border border-[#D4CFC6] object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => onRemoveFile(index)}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#1a1a1a] text-white opacity-0 transition-opacity group-hover:opacity-100"
                   aria-label={`Remove ${file.name}`}
                 >
                   <X size={12} />
@@ -1107,42 +1150,54 @@ function Composer({
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           rows={rows}
-          className={`relative z-10 w-full resize-none bg-transparent pl-14 pr-5 ${textareaPadding} text-[15px] text-[#1a1a1a] placeholder:text-[#b5b0a8] focus:outline-none`}
+          name="message"
+          autoComplete="off"
+          aria-label="Message"
+          className={`w-full resize-none bg-transparent px-5 ${textareaPadding} text-[15px] text-[#1a1a1a] placeholder:text-[#A09A91] focus:outline-none`}
           disabled={isLoading}
         />
-        <div className="absolute bottom-3 left-3 z-20">
+        <div className="flex items-end px-3 pb-3">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-[#8b8b8b] transition-all hover:text-[#9a24b2] hover:bg-[#fce9ec] disabled:opacity-50 disabled:hover:text-[#8b8b8b] disabled:hover:bg-transparent"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7A7A7A] transition-colors hover:bg-[#EDE8DF] hover:text-[#1D3557] disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-[#7A7A7A]"
             aria-label="Upload image"
           >
             <ImagePlus size={18} />
           </button>
-        </div>
-        <div className="absolute bottom-3 right-3 z-20">
-          <button
-            type="submit"
-            disabled={isLoading || (!input.trim() && !hasFiles)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#9a24b2] text-white transition-all hover:shadow-lg hover:scale-105 disabled:bg-[#da9ee6] disabled:text-[#b5b0a8] disabled:scale-100 disabled:shadow-none"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
+          <div className="ml-auto flex items-end gap-2">
+            <button
+              type="button"
+              onClick={onToggleEnterToSend}
+              className="text-[12px] text-[#A09A91] hover:text-[#1D3557] transition-colors select-none whitespace-nowrap"
+              aria-label="Toggle Enter key behavior"
             >
-              <path
-                d="M3 8h10M9 4l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+              {sendHint}
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || (!input.trim() && !hasFiles)}
+              aria-label="Send message"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#D62828] to-[#A52020] text-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:from-[#D4CFC6] disabled:to-[#D4CFC6] disabled:text-[#A09A91] disabled:shadow-none"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 8h10M9 4l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </form>
@@ -1151,17 +1206,16 @@ function Composer({
 
 const taglines = [
   "I'll ask you the hard questions.",
-  "The unexamined life is not worth living.",
   "Want someone to challenge your thinking?",
 ];
 
 const starterCardColors = [
-  { border: "#9a24b2", bg: "#da9ee6" }, // berry
-  { border: "#ed3a5b", bg: "#fce9ec" }, // rose
-  { border: "#f36b00", bg: "#fff1e5" }, // orange
-  { border: "#1cc2ae", bg: "#a6ede4" }, // teal
-  { border: "#ba3cd4", bg: "#fce9ec" }, // berry-light
-  { border: "#d0173a", bg: "#f5b1bd" }, // rose-dark
+  { border: "#D62828", bg: "#F5E1E1" }, // vermillion red
+  { border: "#1D3557", bg: "#D8E2F0" }, // cobalt blue
+  { border: "#F4D35E", bg: "#FDF6E0" }, // cadmium yellow
+  { border: "#2D6A4F", bg: "#D8EDE4" }, // emerald green
+  { border: "#1A1A1A", bg: "#E8E3DA" }, // ink black
+  { border: "#D62828", bg: "#F5E1E1" }, // vermillion red
 ];
 
 const starterCards = [
@@ -1217,7 +1271,7 @@ async function saveMessageToDb(
   try {
     const res = await fetch(`/api/conversations/${conversationId}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...clientAuthHeaders },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role, content: parts }),
     });
     return res.ok;
@@ -1229,6 +1283,7 @@ async function saveMessageToDb(
 export function Chat() {
   const { c: urlConversationId } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
+  const { isLoaded, isSignedIn } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [conversationList, setConversationList] = useState<
@@ -1242,7 +1297,8 @@ export function Chat() {
   const [selectedModelId, setSelectedModelId] = useState("");
 
   const fetchConversationList = useCallback(() => {
-    fetch("/api/conversations", { headers: clientAuthHeaders })
+    if (!isLoaded || !isSignedIn) return;
+    fetch("/api/conversations")
       .then((res) => {
         if (!res.ok) return;
         return res.json();
@@ -1255,37 +1311,35 @@ export function Chat() {
       .catch(() => {
         // Database unavailable — leave list as-is
       });
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   // Load models on mount
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
     const controller = new AbortController();
     fetch("/api/models", {
       signal: controller.signal,
-      headers: clientAuthHeaders,
     })
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data: ModelOption[]) => {
+        if (!data) return;
         setModels(data);
         if (data.length > 0) setSelectedModelId(data[0].id);
       })
       .catch(() => {});
     return () => controller.abort();
-  }, []);
-
-  // Load conversation list on mount
-  useEffect(() => {
-    fetchConversationList();
-  }, [fetchConversationList]);
+  }, [isLoaded, isSignedIn]);
 
   // Load conversation when URL changes
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
     const controller = new AbortController();
     const conversationId = urlConversationId;
 
     if (conversationId) {
       fetch(`/api/conversations/${conversationId}`, {
-        headers: clientAuthHeaders,
         signal: controller.signal,
       })
         .then((res) => {
@@ -1324,7 +1378,7 @@ export function Chat() {
     }
 
     return () => controller.abort();
-  }, [urlConversationId]);
+  }, [isLoaded, isSignedIn, urlConversationId]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {
@@ -1345,7 +1399,6 @@ export function Chat() {
     (id: string) => {
       fetch(`/api/conversations/${id}`, {
         method: "DELETE",
-        headers: clientAuthHeaders,
       })
         .then((res) => {
           if (!res.ok) return;
@@ -1365,17 +1418,33 @@ export function Chat() {
     (id: string) => {
       setCurrentConversationId(id);
       navigate({ search: { c: id } });
-      fetchConversationList();
     },
-    [navigate, fetchConversationList],
+    [navigate],
   );
 
   const handleMessageSaved = useCallback(() => {
     fetchConversationList();
   }, [fetchConversationList]);
 
+  // Load conversation list on mount
+  useEffect(() => {
+    fetchConversationList();
+  }, [fetchConversationList]);
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F0E8] px-4">
+        <p className="text-sm text-[#6f6f6f]">Loading session…</p>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <Navigate to="/sign-in/$" />;
+  }
+
   return (
-    <>
+    <div className="flex h-screen overflow-hidden">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -1396,7 +1465,7 @@ export function Chat() {
         onMessageSaved={handleMessageSaved}
         onToggleSidebar={() => setSidebarOpen((o) => !o)}
       />
-    </>
+    </div>
   );
 }
 
@@ -1421,14 +1490,22 @@ function ChatView({
   onMessageSaved,
   onToggleSidebar,
 }: ChatViewProps) {
-  const [taglineIndex] = useState(() =>
-    Math.floor(Math.random() * taglines.length),
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  const taglineSeed = conversationId ?? "new";
+  const taglineIndex = useMemo(
+    () => hashStringToIndex(taglineSeed, taglines.length),
+    [taglineSeed],
   );
   const convIdRef = useRef(conversationId);
 
   const { messages, sendMessage, status } = useChat({
     messages: initialMessages,
-    headers: clientAuthHeaders,
+    transport: new DefaultChatTransport(),
     onFinish: async ({ message }) => {
       const cId = convIdRef.current;
       if (cId && message.role === "assistant") {
@@ -1440,6 +1517,10 @@ function ChatView({
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<FileList | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
+  const [enterToSend, setEnterToSend] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("enterToSend") === "true";
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1492,10 +1573,16 @@ function ChatView({
         try {
           const res = await fetch("/api/conversations", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...clientAuthHeaders },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({}),
           });
+          if (!res.ok) {
+            throw new Error("Failed to create conversation");
+          }
           const conv = (await res.json()) as { id: string };
+          if (!conv.id) {
+            throw new Error("Conversation response missing id");
+          }
           cId = conv.id;
           convIdRef.current = cId;
           onConversationCreated(cId);
@@ -1544,11 +1631,30 @@ function ChatView({
   );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      submit();
+    if (e.key === "Enter") {
+      if (enterToSend) {
+        // Enter sends, Shift+Enter for new line
+        if (!e.shiftKey && !e.metaKey && !e.ctrlKey) {
+          e.preventDefault();
+          submit();
+        }
+      } else {
+        // Cmd/Ctrl+Enter sends
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault();
+          submit();
+        }
+      }
     }
   };
+
+  const toggleEnterToSend = useCallback(() => {
+    setEnterToSend((prev) => {
+      const next = !prev;
+      localStorage.setItem("enterToSend", String(next));
+      return next;
+    });
+  }, []);
 
   const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -1816,6 +1922,7 @@ function ChatView({
     isDragging,
     files,
     fileUrls,
+    enterToSend,
     textareaRef,
     fileInputRef,
     onSubmit: handleFormSubmit,
@@ -1826,28 +1933,53 @@ function ChatView({
     onKeyDown: handleKeyDown,
     onFileChange: handleFileChange,
     onRemoveFile: removeFile,
+    onToggleEnterToSend: toggleEnterToSend,
   };
 
   // Empty state
   if (!hasMessages) {
+    const tagline = isHydrated ? taglines[taglineIndex] : taglines[0];
+
     return (
-      <div className="flex flex-col h-screen bg-[#fafafa]">
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col items-center px-4 py-12 min-h-full justify-center">
+      <div className="relative flex flex-col h-full flex-1 min-w-0 bg-[#F5F0E8] overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#1D3557]/15 blur-3xl" />
+          <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-[#F4D35E]/30 blur-3xl" />
+          <div className="absolute -bottom-24 -right-16 h-96 w-96 rounded-full bg-[#D62828]/15 blur-3xl" />
+        </div>
+        <div className="md:hidden absolute top-4 left-4 z-10">
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#EDE8DF] transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
+        <div className="absolute right-4 top-4 z-10">
+          <UserButton />
+        </div>
+        <main id="main-content" className="relative flex-1 overflow-y-auto">
+          <div className="flex flex-col items-center px-4 pt-16 pb-12 sm:py-12 min-h-full justify-center">
             <img
               src="/socrates.svg"
-              alt="Soundboard as a Service"
-              className="w-80 h-auto mb-4"
+              alt="Socrates as a Service"
+              width={320}
+              height={400}
+              className="w-48 sm:w-80 h-auto mb-4"
             />
-            <h1 className="text-2xl font-medium text-[#1a1a1a] mb-1">
-              {taglines[taglineIndex]}
+            <h1 className="text-xl sm:text-2xl font-medium text-[#1a1a1a] mb-1 text-center px-2">
+              {tagline}
             </h1>
             {models.length > 1 ? (
               <div className="relative mt-3 mb-6">
                 <select
                   value={selectedModelId}
                   onChange={(e) => onSelectedModelIdChange(e.target.value)}
-                  className="appearance-none rounded-lg border border-[#da9ee6] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#9a24b2] focus:outline-none cursor-pointer"
+                  name="model"
+                  aria-label="Select model"
+                  className="appearance-none rounded-lg border border-[#D4CFC6] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#1D3557] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D3557]/30 cursor-pointer"
                 >
                   {models.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -1861,7 +1993,7 @@ function ChatView({
                 />
               </div>
             ) : null}
-            <div className="grid grid-cols-2 gap-3 w-full max-w-2xl mb-6 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mb-6 mt-2">
               {starterCards.map((card, index) => {
                 const colors =
                   starterCardColors[index % starterCardColors.length];
@@ -1871,7 +2003,7 @@ function ChatView({
                     type="button"
                     onClick={() => submit(card.prompt)}
                     disabled={isLoading}
-                    className="text-left rounded-xl border-l-4 px-4 py-3 transition-all hover:shadow-md disabled:opacity-50"
+                    className="text-left rounded-xl border-l-4 px-4 py-3 transition-shadow hover:shadow-md disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D3557]/60 focus-visible:ring-offset-2"
                     style={{
                       borderLeftColor: colors.border,
                       backgroundColor: colors.bg,
@@ -1890,37 +2022,44 @@ function ChatView({
             <Composer
               {...composerProps}
               formClassName="w-full max-w-2xl"
-              placeholder="Share a thought or belief..."
+              placeholder="Share a thought or belief…"
               rows={3}
-              textareaPadding="pt-4 pb-14"
+              textareaPadding="pt-4 pb-2"
             />
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   // Conversation view
   return (
-    <div className="flex flex-col h-screen bg-[#fafafa]">
+    <div className="relative flex flex-col h-full flex-1 min-w-0 bg-[#F5F0E8] overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#1D3557]/12 blur-3xl" />
+        <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-[#F4D35E]/25 blur-3xl" />
+        <div className="absolute -bottom-24 -right-16 h-96 w-96 rounded-full bg-[#D62828]/12 blur-3xl" />
+      </div>
       {/* Sticky header */}
-      <div className="shrink-0 flex items-center gap-3 px-6 py-3 bg-[#fafafa] border-b border-[#eae7e3]">
+      <div className="relative shrink-0 flex items-center gap-3 px-6 py-3 bg-[#F5F0E8]/80 backdrop-blur-sm border-b border-[#1A1A1A]/10">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="p-1.5 rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#fce9ec] transition-colors"
+          className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#8b8b8b] hover:text-[#1a1a1a] hover:bg-[#EDE8DF] transition-colors"
           aria-label="Toggle sidebar"
         >
           <Menu size={20} />
         </button>
         <img
           src="/socrates.svg"
-          alt="Soundboard as a Service"
+          alt="Socrates as a Service"
+          width={40}
+          height={40}
           className="w-10 h-10"
         />
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-medium text-[#1a1a1a] leading-tight">
-            Soundboard as a Service
+            Socrates as a Service
           </h1>
           <p className="text-xs text-[#8b8b8b]">
             Just when they told you that SaaS was dead
@@ -1931,7 +2070,9 @@ function ChatView({
             <select
               value={selectedModelId}
               onChange={(e) => onSelectedModelIdChange(e.target.value)}
-              className="appearance-none rounded-lg border border-[#da9ee6] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#9a24b2] focus:outline-none cursor-pointer"
+              name="model"
+              aria-label="Select model"
+              className="appearance-none rounded-lg border border-[#D4CFC6] bg-white px-3 py-1.5 pr-8 text-xs text-[#8b8b8b] focus:border-[#1D3557] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D3557]/30 cursor-pointer"
             >
               {models.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -1945,16 +2086,25 @@ function ChatView({
             />
           </div>
         ) : null}
+        <div className="shrink-0">
+          <UserButton />
+        </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+      <main id="main-content" className="relative flex-1 overflow-y-auto">
+        <div
+          className="mx-auto max-w-2xl px-4 py-8 space-y-6"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-busy={isLoading}
+        >
           {messages.map((message) => (
             <div key={message.id}>
               {message.role === "user" ? (
                 <div className="flex justify-end">
                   <div
-                    className="max-w-[85%] rounded-2xl bg-[#9a24b2] px-5 py-3 text-white"
+                    className="bubble-user max-w-[85%] bg-[#1D3557] px-5 py-3 text-white"
                     style={{ boxShadow: composerShadow }}
                   >
                     {renderMessageParts(message)}
@@ -1965,9 +2115,11 @@ function ChatView({
                   <img
                     src="/socrates.svg"
                     alt=""
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full object-cover shrink-0 mt-1"
                   />
-                  <div className="min-w-0">{renderMessageParts(message)}</div>
+                  <div className="bubble-assistant min-w-0 px-4 py-3">{renderMessageParts(message)}</div>
                 </div>
               )}
             </div>
@@ -1978,12 +2130,14 @@ function ChatView({
               <img
                 src="/socrates.svg"
                 alt=""
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-full object-cover shrink-0 mt-1"
               />
               <div className="flex items-center gap-1.5 py-2">
-                <span className="w-2 h-2 rounded-full bg-[#9a24b2] animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 rounded-full bg-[#ed3a5b] animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 rounded-full bg-[#1cc2ae] animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#D62828] animate-bounce motion-reduce:animate-none [animation-delay:0ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#1D3557] animate-bounce motion-reduce:animate-none [animation-delay:150ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#F4D35E] animate-bounce motion-reduce:animate-none [animation-delay:300ms]" />
               </div>
             </div>
           ) : null}
@@ -1993,13 +2147,13 @@ function ChatView({
       </main>
 
       {/* Pinned composer at bottom */}
-      <div className="shrink-0 border-t border-[#eae7e3] bg-[#fafafa] px-4 py-4">
+      <div className="relative shrink-0 border-t border-[#1A1A1A]/10 bg-[#F5F0E8]/80 backdrop-blur-sm px-4 py-4">
         <Composer
           {...composerProps}
           formClassName="mx-auto max-w-2xl"
-          placeholder="Reply..."
+          placeholder="Reply…"
           rows={1}
-          textareaPadding="pt-3.5 pb-12"
+          textareaPadding="pt-3.5 pb-2"
         />
       </div>
     </div>
