@@ -1205,8 +1205,7 @@ function Composer({
 }
 
 const taglines = [
-  "I'll ask you the hard questions.",
-  "Want someone to challenge your thinking?",
+  "Your favourite gadfly at your service.",
 ];
 
 const starterCardColors = [
@@ -2031,7 +2030,7 @@ function ChatView({
             <Composer
               {...composerProps}
               formClassName="w-full max-w-2xl"
-              placeholder="Share a thought or belief…"
+              placeholder="What are we chatting about today?"
               rows={3}
               textareaPadding="pt-4 pb-2"
             />

@@ -189,7 +189,7 @@ describe("Chat", () => {
     it("renders a textarea with placeholder", () => {
       render(<Chat />);
       expect(
-        screen.getByPlaceholderText("Share a thought or belief…"),
+        screen.getByPlaceholderText("What are we chatting about today?"),
       ).toBeDefined();
     });
 
@@ -205,7 +205,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
       fireEvent.change(textarea, { target: { value: "What is justice?" } });
       const submitButtons = screen
@@ -218,7 +218,7 @@ describe("Chat", () => {
       useChatDefaults({ status: "streaming" });
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
       expect(textarea.hasAttribute("disabled")).toBe(true);
     });
@@ -440,7 +440,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
@@ -458,7 +458,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
@@ -476,7 +476,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
 
       fireEvent.change(textarea, { target: { value: "What is virtue?" } });
@@ -489,7 +489,7 @@ describe("Chat", () => {
       useChatDefaults();
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
 
       fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
@@ -501,7 +501,7 @@ describe("Chat", () => {
       useChatDefaults({ status: "streaming" });
       render(<Chat />);
       const textarea = screen.getByPlaceholderText(
-        "Share a thought or belief…",
+        "What are we chatting about today?",
       );
 
       fireEvent.change(textarea, { target: { value: "Hello" } });
