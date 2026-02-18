@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
+import { clerkAppearance } from "../lib/clerk-theme";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -79,6 +80,7 @@ function RootComponent() {
         (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined) ??
         undefined
       }
+      appearance={clerkAppearance}
     >
       <Outlet />
     </ClerkProvider>

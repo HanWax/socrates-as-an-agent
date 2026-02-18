@@ -27,14 +27,8 @@ function SignUpPage() {
         <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-[#F4D35E]/30 blur-3xl" />
         <div className="absolute -bottom-24 -right-16 h-96 w-96 rounded-full bg-[#D62828]/15 blur-3xl" />
       </div>
-      <div className="relative w-full max-w-md rounded-[26px] border border-[#D4CFC6] bg-white/92 p-6 shadow-[0_26px_80px_rgba(26,26,26,0.10)] backdrop-blur">
+      <div className="relative w-full max-w-md rounded-[26px] border border-[#D4CFC6] bg-white/92 p-8 shadow-[0_26px_80px_rgba(26,26,26,0.10)] backdrop-blur">
         <SignUp />
-        <p className="mt-4 text-center text-sm text-[#6f6f6f]">
-          Already have an account?{" "}
-          <a href="/sign-in" className="font-semibold text-[#1D3557]">
-            Sign in
-          </a>
-        </p>
       </div>
     </div>
   );
