@@ -33,13 +33,12 @@ export const clerkAppearance: Appearance = {
     },
 
     /* ── Header ─────────────────────────────────────────────── */
+    /* Hide the default Clerk header — branding lives above the card */
     headerTitle: {
-      color: "#1a1a1a",
-      fontWeight: "700",
-      fontSize: "1.35rem",
+      display: "none",
     },
     headerSubtitle: {
-      color: "#6f6f6f",
+      display: "none",
     },
 
     /* ── Primary button ─────────────────────────────────────── */
