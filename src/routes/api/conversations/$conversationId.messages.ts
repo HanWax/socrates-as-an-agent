@@ -40,6 +40,20 @@ export const Route = createFileRoute(
           }
 
           const { conversationId } = params;
+
+          // Verify the authenticated user owns this conversation
+          const sql = getDb();
+          const ownerCheck = await sql`
+            SELECT id FROM conversations
+            WHERE id = ${conversationId} AND user_id = ${auth.userId}
+          `;
+          if (ownerCheck.length === 0) {
+            return new Response(
+              JSON.stringify({ error: "Conversation not found" }),
+              { status: 404, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
           const body = (await request.json()) as {
             role: string;
             content: unknown;
@@ -67,8 +81,6 @@ export const Route = createFileRoute(
               { status: 400, headers: { "Content-Type": "application/json" } },
             );
           }
-
-          const sql = getDb();
 
           // Save the message (content is passed as-is; the column should be JSONB)
           const contentJson = JSON.stringify(content);

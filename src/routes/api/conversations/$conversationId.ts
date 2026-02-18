@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
           const convRows = await sql`
             SELECT id, title, created_at, updated_at
             FROM conversations
-            WHERE id = ${conversationId}
+            WHERE id = ${conversationId} AND user_id = ${auth.userId}
           `;
           if (convRows.length === 0) {
             return new Response(
@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/conversations/$conversationId")({
           const sql = getDb();
           const rows = await sql`
             DELETE FROM conversations
-            WHERE id = ${conversationId}
+            WHERE id = ${conversationId} AND user_id = ${auth.userId}
             RETURNING id
           `;
           if (rows.length === 0) {

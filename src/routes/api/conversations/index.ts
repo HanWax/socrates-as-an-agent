@@ -32,6 +32,7 @@ export const Route = createFileRoute("/api/conversations/")({
           const rows = await sql`
             SELECT id, title, created_at, updated_at
             FROM conversations
+            WHERE user_id = ${auth.userId}
             ORDER BY updated_at DESC
             LIMIT ${limit}
           `;
@@ -76,8 +77,8 @@ export const Route = createFileRoute("/api/conversations/")({
           const title = body.title ?? "New conversation";
           const sql = getDb();
           const rows = await sql`
-            INSERT INTO conversations (title)
-            VALUES (${title})
+            INSERT INTO conversations (title, user_id)
+            VALUES (${title}, ${auth.userId})
             RETURNING id, title, created_at, updated_at
           `;
           return new Response(JSON.stringify(rows[0]), {

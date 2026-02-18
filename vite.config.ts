@@ -23,7 +23,7 @@ const config = defineConfig({
     devSourcemap: true,
   },
   build: {
-    sourcemap: true,
+    sourcemap: false,
   },
   resolve: {
     alias: [
@@ -49,7 +49,7 @@ const config = defineConfig({
     }),
     nitro({
       preset: "vercel",
-      sourcemap: true,
+      sourcemap: false,
       rollupConfig: { external: [/^@sentry\//] },
     }),
     // this is the plugin that enables path aliases
