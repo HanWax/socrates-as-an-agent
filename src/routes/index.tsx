@@ -1242,6 +1242,36 @@ const starterCards = [
   },
 ];
 
+function createWelcomeMessage(): UIMessage {
+  return {
+    id: "welcome",
+    role: "assistant",
+    content: "",
+    parts: [
+      {
+        type: "text",
+        text: `Welcome, friend. I'm Socrates — though these days I trade the Athenian agora for conversations like this one.
+
+I'm here to help you think more clearly, challenge your assumptions, and then **actually build something together**. I won't just ask you questions forever — once we've sharpened your thinking, we'll get to work.
+
+Here are some things I can help with:
+
+- **Stress-test an idea** — bring me a business plan, strategy, or belief and I'll ask the questions that matter
+- **Think through a decision** — career moves, life direction, ethical dilemmas
+- **Learn a topic deeply** — I'll teach you through questions, then test your understanding
+- **Research and discover** — I can search the web for evidence, and find podcasts, articles, and essays you might have missed
+- **Map out an argument** — I'll lay out the logical structure so you can spot the gaps
+- **Draw diagrams** — flowcharts, decision trees, and cause-and-effect chains to make ideas visual
+- **Fact-check a claim** — I'll evaluate what's supported, what's not, and what's uncertain
+- **Recommend reading** — books, papers, and resources to go deeper on any topic
+
+So — what would you like to think through today?`,
+      },
+    ],
+    createdAt: new Date(),
+  };
+}
+
 interface ConversationListItem {
   id: string;
   title: string;
@@ -1280,7 +1310,9 @@ export function Chat() {
   const [chatViewKey, setChatViewKey] = useState<string>(
     urlConversationId ?? "new",
   );
-  const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
+  const [initialMessages, setInitialMessages] = useState<UIMessage[]>(
+    urlConversationId ? [] : () => [createWelcomeMessage()],
+  );
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModelId, setSelectedModelId] = useState("");
 
@@ -1364,12 +1396,12 @@ export function Chat() {
         )
         .catch(() => {
           if (controller.signal.aborted) return;
-          setInitialMessages([]);
+          setInitialMessages([createWelcomeMessage()]);
           setCurrentConversationId(undefined);
           setChatViewKey("new");
         });
     } else {
-      setInitialMessages([]);
+      setInitialMessages([createWelcomeMessage()]);
       setCurrentConversationId(undefined);
       setChatViewKey("new");
     }
@@ -1387,9 +1419,9 @@ export function Chat() {
 
   const handleNewConversation = useCallback(() => {
     setSidebarOpen(false);
-    setInitialMessages([]);
+    setInitialMessages([createWelcomeMessage()]);
     setCurrentConversationId(undefined);
-    setChatViewKey("new");
+    setChatViewKey(`new-${Date.now()}`);
     navigate({ search: { c: undefined } });
   }, [navigate]);
 

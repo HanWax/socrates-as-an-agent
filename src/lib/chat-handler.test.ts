@@ -71,8 +71,8 @@ function setupStreamTextMock() {
 describe("SYSTEM_PROMPT", () => {
   it("contains Socratic method instructions", () => {
     expect(SYSTEM_PROMPT).toContain("Socrates");
-    expect(SYSTEM_PROMPT).toContain("NEVER give direct answers");
-    expect(SYSTEM_PROMPT).toContain("probing questions");
+    expect(SYSTEM_PROMPT).toContain("questioning assumptions");
+    expect(SYSTEM_PROMPT).toContain("probing");
   });
 
   it("instructs to challenge assumptions", () => {
